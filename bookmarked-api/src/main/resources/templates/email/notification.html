@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body th:replace="~{email/layout :: page(~{::section})}">
+<section>
+    <p>Hi <span th:text="${name}">there</span>,</p>
+    <p style="font-size:16px;"><strong th:text="${title}">Your order has shipped</strong></p>
+    <p th:text="${message}">Clean Code is on its way with Delhivery (tracking AWB123).</p>
+    <p style="margin:28px 0;" th:if="${link != null}">
+        <a th:href="${link}"
+           style="background:#1e3a8a;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:bold;"
+           th:text="${linkLabel}">View your order</a>
+    </p>
+</section>
+</body>
+</html>

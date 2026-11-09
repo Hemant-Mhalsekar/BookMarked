@@ -95,6 +95,18 @@ public class MailService {
                         "libraryLink", props.frontendUrl() + "/library"));
     }
 
+    /** Generic event email (shipped, delivered, cancelled, refund…); {@code path} is relative to the site. */
+    @Async
+    public void sendNotification(Recipient to, String title, String message, String path, String linkLabel) {
+        Map<String, Object> vars = new java.util.HashMap<>();
+        vars.put("name", to.name());
+        vars.put("title", title);
+        vars.put("message", message);
+        vars.put("link", path == null ? null : props.frontendUrl() + path);
+        vars.put("linkLabel", linkLabel == null ? "View details" : linkLabel);
+        send(to, title, "email/notification", vars);
+    }
+
     private void send(Recipient to, String subject, String template, Map<String, Object> vars) {
         try {
             Context ctx = new Context();

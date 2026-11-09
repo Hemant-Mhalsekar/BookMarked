@@ -61,6 +61,9 @@ public class OrderItem {
     @Column(name = "delivered_at")
     private Instant deliveredAt;
 
+    @Column(name = "shipment_id")
+    private Long shipmentId;
+
     protected OrderItem() {
     }
 
@@ -128,5 +131,23 @@ public class OrderItem {
 
     public void setDeliveredAt(Instant deliveredAt) {
         this.deliveredAt = deliveredAt;
+    }
+
+    public Long getShipmentId() {
+        return shipmentId;
+    }
+
+    public void setShipmentId(Long shipmentId) {
+        this.shipmentId = shipmentId;
+    }
+
+    /** What the customer actually paid for this line (price after any coupon share). */
+    public java.math.BigDecimal paidAmount() {
+        return lineTotal().subtract(discountShare == null ? java.math.BigDecimal.ZERO : discountShare);
+    }
+
+    public boolean isCancellable() {
+        return format.isPhysical() && (fulfillmentStatus == OrderEnums.FulfillmentStatus.PLACED
+                || fulfillmentStatus == OrderEnums.FulfillmentStatus.PROCESSING);
     }
 }

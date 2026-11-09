@@ -6,7 +6,10 @@ import com.bookmarked.catalog.BookVariantRepository;
 import com.bookmarked.catalog.InventoryMovement;
 import com.bookmarked.catalog.InventoryMovementRepository;
 import com.bookmarked.common.ApiException;
+import com.bookmarked.config.AppProperties;
 import com.bookmarked.mail.MailService;
+import com.bookmarked.notification.NotificationService;
+import com.bookmarked.notification.NotificationService.Type;
 import com.bookmarked.order.OrderEnums.FulfillmentStatus;
 import com.bookmarked.user.User;
 import com.bookmarked.user.UserRepository;
@@ -37,18 +40,23 @@ public class OrderOperations {
     private final CartRepository carts;
     private final UserRepository users;
     private final MailService mail;
+    private final NotificationService notifications;
     private final JdbcTemplate jdbc;
     private final Clock clock;
+    private final int lowStockThreshold;
 
     public OrderOperations(BookVariantRepository variants, InventoryMovementRepository movements, CartRepository carts,
-                           UserRepository users, MailService mail, JdbcTemplate jdbc, Clock clock) {
+                           UserRepository users, MailService mail, NotificationService notifications,
+                           JdbcTemplate jdbc, Clock clock, AppProperties props) {
         this.variants = variants;
         this.movements = movements;
         this.carts = carts;
         this.users = users;
         this.mail = mail;
+        this.notifications = notifications;
         this.jdbc = jdbc;
         this.clock = clock;
+        this.lowStockThreshold = props.business().lowStockThreshold();
     }
 
     // ------------------------------------------------------------------
@@ -83,6 +91,20 @@ public class OrderOperations {
         for (OrderItem item : physical(order)) {
             movements.save(new InventoryMovement(item.getVariant().getId(), -item.getQuantity(), reason,
                     order.getOrderNumber(), null, null));
+            alertIfLowStock(item);
+        }
+    }
+
+    /** Tells inventory staff once, when a sale takes stock from above the threshold to at or below it. */
+    private void alertIfLowStock(OrderItem item) {
+        Integer left = jdbc.queryForObject("select stock from book_variants where id = ?", Integer.class,
+                item.getVariant().getId());
+        if (left != null && left <= lowStockThreshold && left + item.getQuantity() > lowStockThreshold) {
+            String label = item.getTitleSnapshot() + " (" + formatLabel(item.getFormat()) + ")";
+            notifications.notifyStaff("INVENTORY_UPDATE", Type.LOW_STOCK,
+                    left == 0 ? "Sold out: " + label : "Low stock: " + label,
+                    left == 0 ? label + " is out of stock." : "Only " + left + " left of " + label + ".",
+                    "/admin/books/" + item.getVariant().getBook().getId() + "/edit");
         }
     }
 
@@ -100,6 +122,19 @@ public class OrderOperations {
         taken.forEach(t -> movements.save(new InventoryMovement(t.getVariant().getId(), -t.getQuantity(),
                 InventoryMovement.Reason.RESERVATION, order.getOrderNumber(), "Re-reserved for late payment", null)));
         return true;
+    }
+
+    /** Puts the stock of these (physical) items back, with a ledger entry each. */
+    public void releaseItems(PurchaseOrder order, List<OrderItem> items, InventoryMovement.Reason reason, String note,
+                             Long actorId) {
+        for (OrderItem item : items) {
+            if (!item.getFormat().isPhysical()) {
+                continue;
+            }
+            variants.releaseStock(item.getVariant().getId(), item.getQuantity());
+            movements.save(new InventoryMovement(item.getVariant().getId(), item.getQuantity(), reason,
+                    order.getOrderNumber(), note, actorId));
+        }
     }
 
     public void releaseStock(PurchaseOrder order, InventoryMovement.Reason reason, String note) {
@@ -139,6 +174,17 @@ public class OrderOperations {
         }
         removeFromStack(order);
         sendConfirmation(order, hasEbooks, hasPhysical);
+        String link = "/orders/" + order.getOrderNumber();
+        notifications.notify(order.getUserId(), Type.ORDER_PLACED, "Order " + order.getOrderNumber() + " confirmed",
+                hasEbooks && !hasPhysical ? "Your e-books are ready in My Library." : "We'll let you know when it ships.",
+                link);
+        if (hasPhysical) {
+            notifications.notifyStaff("ORDER_UPDATE", Type.NEW_ORDER, "New order " + order.getOrderNumber(),
+                    rupees(order.getTotal()) + " · " + (order.getPaymentMethod() == OrderEnums.PaymentMethod.COD
+                            ? "Cash on Delivery" : "Paid online") + " · ready to pack",
+                    "/admin/orders/" + order.getOrderNumber());
+        }
+        refreshOrderStatus(order);   // an e-book-only order is complete straight away
     }
 
     public void cancelItems(PurchaseOrder order, String note) {
@@ -149,11 +195,43 @@ public class OrderOperations {
     }
 
     public void history(OrderItem item, FulfillmentStatus status, String note) {
+        history(item, status, note, null);
+    }
+
+    /** @param actorId the staff member who made the change, or null for the customer / the system */
+    public void history(OrderItem item, FulfillmentStatus status, String note, Long actorId) {
         if (item.getId() == null) {
             return;
         }
-        jdbc.update("insert into order_status_history (order_item_id, status, note, changed_by, changed_at) values (?, ?, ?, null, ?)",
-                item.getId(), status.name(), note, Timestamp.from(clock.instant()));
+        jdbc.update("insert into order_status_history (order_item_id, status, note, changed_by, changed_at) values (?, ?, ?, ?, ?)",
+                item.getId(), status.name(), note, actorId, Timestamp.from(clock.instant()));
+    }
+
+    /**
+     * Keeps the order-level status in line with its items: all cancelled → CANCELLED;
+     * every item finished (delivered, cancelled or returned) → COMPLETED.
+     */
+    public void refreshOrderStatus(PurchaseOrder order) {
+        if (order.getStatus() != OrderEnums.OrderStatus.CONFIRMED && order.getStatus() != OrderEnums.OrderStatus.COMPLETED) {
+            return;
+        }
+        boolean allCancelled = order.getItems().stream()
+                .allMatch(i -> i.getFulfillmentStatus() == FulfillmentStatus.CANCELLED);
+        boolean allDone = order.getItems().stream().allMatch(i -> switch (i.getFulfillmentStatus()) {
+            case DELIVERED, CANCELLED, RETURNED -> true;
+            default -> false;
+        });
+        if (allCancelled) {
+            order.setStatus(OrderEnums.OrderStatus.CANCELLED);
+        } else if (allDone) {
+            order.setStatus(OrderEnums.OrderStatus.COMPLETED);
+        } else {
+            order.setStatus(OrderEnums.OrderStatus.CONFIRMED);
+        }
+    }
+
+    static String formatName(BookFormat format) {
+        return formatLabel(format);
     }
 
     private void removeFromStack(PurchaseOrder order) {
