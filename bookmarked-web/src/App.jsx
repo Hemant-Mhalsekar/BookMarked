@@ -4,7 +4,9 @@ import { Outlet, Route, Routes } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import ProtectedRoute, { GuestOnlyRoute } from './components/ProtectedRoute'
 import AccountPage from './features/account/AccountPage'
+import AccountLayout from './features/account/AccountLayout'
 import AddressesPage from './features/account/AddressesPage'
+import ProfilePage from './features/account/ProfilePage'
 import SecurityPage from './features/account/SecurityPage'
 import { useRefreshMutation } from './features/auth/authApi'
 import { selectAuthStatus } from './features/auth/authSlice'
@@ -17,6 +19,7 @@ import AdminBookFormPage from './features/admin/AdminBookFormPage'
 import AdminBooksPage from './features/admin/AdminBooksPage'
 import AdminCategoriesPage from './features/admin/AdminCategoriesPage'
 import AdminLayout from './features/admin/AdminLayout'
+import AdminReviewsPage from './features/admin/AdminReviewsPage'
 import AdminOrderPage from './features/admin/orders/AdminOrderPage'
 import AdminOrdersPage from './features/admin/orders/AdminOrdersPage'
 import AdminRefundsPage from './features/admin/orders/AdminRefundsPage'
@@ -26,6 +29,7 @@ import BooksPage from './features/catalog/BooksPage'
 import BookmarksPage from './features/bookmarks/BookmarksPage'
 import LibraryPage from './features/library/LibraryPage'
 import NotificationsPage from './features/notifications/NotificationsPage'
+import MyReviewsPage from './features/reviews/MyReviewsPage'
 import CheckoutPage from './features/checkout/CheckoutPage'
 import OrderDetailPage from './features/orders/OrderDetailPage'
 import OrdersPage from './features/orders/OrdersPage'
@@ -81,8 +85,15 @@ export default function App() {
         </Route>
 
         <Route element={<ProtectedRoute />}>
-          <Route path="account" element={<AccountPage />} />
-          <Route path="account/security" element={<SecurityPage />} />
+          <Route path="account" element={<AccountLayout />}>
+            <Route index element={<AccountPage />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="security" element={<SecurityPage />} />
+            <Route element={<ProtectedRoute customerOnly />}>
+              <Route path="addresses" element={<AddressesPage />} />
+              <Route path="reviews" element={<MyReviewsPage />} />
+            </Route>
+          </Route>
           <Route path="notifications" element={<NotificationsPage />} />
         </Route>
 
@@ -94,7 +105,6 @@ export default function App() {
           <Route path="order-success/:orderNumber" element={<OrderDetailPage success />} />
           <Route path="orders" element={<OrdersPage />} />
           <Route path="orders/:orderNumber" element={<OrderDetailPage />} />
-          <Route path="account/addresses" element={<AddressesPage />} />
         </Route>
 
         <Route element={<ProtectedRoute staffOnly />}>
@@ -107,6 +117,9 @@ export default function App() {
             <Route element={<ProtectedRoute staffOnly permission="ORDER_READ" />}>
               <Route path="orders" element={<AdminOrdersPage />} />
               <Route path="orders/:orderNumber" element={<AdminOrderPage />} />
+            </Route>
+            <Route element={<ProtectedRoute staffOnly permission="REVIEW_MODERATE" />}>
+              <Route path="reviews" element={<AdminReviewsPage />} />
             </Route>
             <Route element={<ProtectedRoute staffOnly permission="RETURN_MANAGE" />}>
               <Route path="returns" element={<AdminReturnsPage />} />

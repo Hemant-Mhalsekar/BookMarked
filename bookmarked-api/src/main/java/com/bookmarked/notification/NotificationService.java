@@ -28,9 +28,9 @@ public class NotificationService {
     /** What a notification is about; the frontend picks an icon from it. */
     public enum Type {
         ORDER_PLACED, PAYMENT_FAILED, ORDER_PROCESSING, ORDER_SHIPPED, ORDER_DELIVERED, ORDER_CANCELLED,
-        REFUND_PROCESSED, REFUND_FAILED, RETURN_UPDATE,
+        REFUND_PROCESSED, REFUND_FAILED, RETURN_UPDATE, REVIEW_REQUEST,
         // staff
-        NEW_ORDER, LOW_STOCK, NEW_RETURN
+        NEW_ORDER, LOW_STOCK, NEW_RETURN, REVIEW_REPORTED
     }
 
     public record Item(Long id, String type, String title, String message, String link, boolean read, Instant createdAt) {

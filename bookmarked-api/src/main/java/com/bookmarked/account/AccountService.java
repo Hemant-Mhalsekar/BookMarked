@@ -109,6 +109,40 @@ public class AccountService {
                 .toList();
     }
 
+    /** Name only; email and phone have their own, stricter flows. */
+    @Transactional
+    public UserDto updateName(AuthUser caller, String fullName) {
+        User user = load(caller);
+        user.setFullName(fullName.strip().replaceAll("\\s+", " "));
+        return UserDto.from(user);
+    }
+
+    /**
+     * A new mobile number needs the current password (so a stolen session can't
+     * quietly change how the account is identified), and must not belong to anyone else.
+     */
+    @Transactional
+    public UserDto changePhone(AuthUser caller, String phone, String password) {
+        User user = load(caller);
+        if (!passwordEncoder.matches(password, user.getPasswordHash())) {
+            throw ApiException.badRequest("WRONG_PASSWORD", "Your password is incorrect.");
+        }
+        String clean = phone.strip();
+        if (clean.equals(user.getPhone())) {
+            return UserDto.from(user);
+        }
+        if (users.existsByPhone(clean)) {
+            throw ApiException.conflict("PHONE_TAKEN", "That mobile number is already used by another account.");
+        }
+        user.setPhone(clean);
+        try {
+            users.flush();
+        } catch (org.springframework.dao.DataIntegrityViolationException e) {
+            throw ApiException.conflict("PHONE_TAKEN", "That mobile number is already used by another account.");
+        }
+        return UserDto.from(user);
+    }
+
     private User load(AuthUser caller) {
         return users.findById(caller.id())
                 .filter(u -> !u.isDeleted())

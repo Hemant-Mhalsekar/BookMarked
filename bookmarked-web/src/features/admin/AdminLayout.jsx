@@ -8,6 +8,7 @@ const SECTIONS = [
   { to: '/admin/orders', label: 'Orders', permission: 'ORDER_READ' },
   { to: '/admin/returns', label: 'Returns', permission: 'RETURN_MANAGE' },
   { to: '/admin/refunds', label: 'Refunds', permission: 'REFUND_ISSUE' },
+  { to: '/admin/reviews', label: 'Reviews', permission: 'REVIEW_MODERATE' },
   { to: '/admin/books', label: 'Books', permission: 'BOOK_READ' },
   { to: '/admin/categories', label: 'Categories', permission: 'BOOK_READ' },
 ]
