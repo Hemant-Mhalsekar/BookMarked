@@ -30,6 +30,13 @@ export function stepsFor(item) {
       { status: 'CANCELLED', label: 'Cancelled', at: cancelled?.at ?? null, done: true, note: cancelled?.note ?? null },
     ]
   }
+  if (item.fulfillmentStatus === 'RETURN_REQUESTED' || item.fulfillmentStatus === 'RETURNED') {
+    const ret = (item.timeline ?? []).filter((t) => t.status === item.fulfillmentStatus).at(-1)
+    return [
+      ...steps,
+      { status: item.fulfillmentStatus, label: item.fulfillmentStatus === 'RETURNED' ? 'Returned' : 'Return requested', at: ret?.at ?? null, done: true },
+    ]
+  }
   return steps
 }
 
@@ -69,3 +76,25 @@ export const REFUND_STATUS_TEXT = {
   PROCESSED: 'Refunded',
   FAILED: 'Refund delayed',
 }
+
+export const RETURN_REASONS = [
+  { value: 'DAMAGED', label: 'Arrived damaged' },
+  { value: 'WRONG_ITEM', label: 'Wrong book or format' },
+  { value: 'PRINTING_DEFECT', label: 'Missing pages / printing defect' },
+  { value: 'NOT_AS_DESCRIBED', label: 'Not as described' },
+  { value: 'CHANGED_MIND', label: 'Changed my mind' },
+]
+
+export const RETURN_REASON_TEXT = Object.fromEntries(RETURN_REASONS.map((r) => [r.value, r.label]))
+
+export const RETURN_STATUS_TEXT = {
+  REQUESTED: 'Return requested · under review',
+  APPROVED: 'Return approved · pickup being arranged',
+  PICKED_UP: 'Picked up · on its way back to us',
+  RECEIVED: 'Received · refund being processed',
+  REFUNDED: 'Returned and refunded',
+  REJECTED: 'Return declined',
+}
+
+/** Mirrors ReturnService.UPI_REGEX. */
+export const UPI_REGEX = /^[A-Za-z0-9._-]{2,64}@[A-Za-z][A-Za-z0-9]{1,30}$/

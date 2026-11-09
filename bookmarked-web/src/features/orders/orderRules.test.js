@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { refundPreview, stepsFor } from './orderRules'
+import { refundPreview, stepsFor, UPI_REGEX } from './orderRules'
 
 const at = (d) => `2026-11-0${d}T10:00:00Z`
 
@@ -53,5 +53,24 @@ describe('refundPreview', () => {
   it('is zero for Cash on Delivery or nothing selected', () => {
     expect(refundPreview({ ...order, paymentMethod: 'COD', paymentStatus: 'COD_PENDING' }, [1])).toBe(0)
     expect(refundPreview(order, [])).toBe(0)
+  })
+})
+
+describe('returns', () => {
+  it('adds the return to the end of the stepper', () => {
+    const steps = stepsFor({
+      fulfillmentStatus: 'RETURN_REQUESTED',
+      timeline: ['PLACED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'RETURN_REQUESTED'].map((status, i) => ({ status, at: at(i + 1) })),
+    })
+    expect(steps.map((s) => s.status)).toEqual(['PLACED', 'PROCESSING', 'SHIPPED', 'DELIVERED', 'RETURN_REQUESTED'])
+    expect(steps.every((s) => s.done)).toBe(true)
+  })
+
+  it('checks UPI IDs like the backend', () => {
+    expect(UPI_REGEX.test('reader.one@okhdfc')).toBe(true)
+    expect(UPI_REGEX.test('9876543210@ybl')).toBe(true)
+    expect(UPI_REGEX.test('not a upi')).toBe(false)
+    expect(UPI_REGEX.test('name@')).toBe(false)
+    expect(UPI_REGEX.test('@okaxis')).toBe(false)
   })
 })

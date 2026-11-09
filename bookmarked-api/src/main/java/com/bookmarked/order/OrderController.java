@@ -31,9 +31,11 @@ public class OrderController {
     private final PurchaseOrderRepository repository;
     private final CancellationService cancellations;
     private final InvoiceService invoices;
+    private final ReturnService returns;
 
     public OrderController(OrderQueryService orders, PurchaseOrderRepository repository,
-                           CancellationService cancellations, InvoiceService invoices) {
+                           CancellationService cancellations, InvoiceService invoices, ReturnService returns) {
+        this.returns = returns;
         this.orders = orders;
         this.repository = repository;
         this.cancellations = cancellations;
@@ -58,6 +60,18 @@ public class OrderController {
         Long id = repository.findIdByOrderNumberAndUserId(orderNumber, caller.id())
                 .orElseThrow(() -> ApiException.notFound("ORDER_NOT_FOUND", "Order not found."));
         cancellations.cancel(id, req == null ? null : req.itemIds(), req == null ? null : req.reason(), null);
+        return orders.detail(caller, orderNumber);
+    }
+
+    @Operation(summary = "Return a delivered book within 7 days (refund only)")
+    @PostMapping("/{orderNumber}/items/{itemId}/return")
+    public OrderQueryService.OrderDetail requestReturn(@AuthenticationPrincipal AuthUser caller,
+                                                       @PathVariable String orderNumber, @PathVariable Long itemId,
+                                                       @Valid @RequestBody ReturnService.ReturnRequest req) {
+        CustomerOnly.require(caller);
+        Long id = repository.findIdByOrderNumberAndUserId(orderNumber, caller.id())
+                .orElseThrow(() -> ApiException.notFound("ORDER_NOT_FOUND", "Order not found."));
+        returns.request(id, itemId, req);
         return orders.detail(caller, orderNumber);
     }
 

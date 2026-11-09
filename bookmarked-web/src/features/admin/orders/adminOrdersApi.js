@@ -47,6 +47,22 @@ export const adminOrdersApi = api.injectEndpoints({
       keepUnusedDataFor: 0,
     }),
 
+    returns: build.query({
+      query: ({ status, page = 0, size = 20 } = {}) => ({
+        url: '/admin/returns',
+        params: Object.fromEntries(Object.entries({ status, page, size }).filter(([, v]) => v !== undefined && v !== '')),
+      }),
+      providesTags: ['Return'],
+    }),
+    returnAction: build.mutation({
+      query: ({ id, action, ...body }) => ({
+        url: `/admin/returns/${id}/${action}`,
+        method: 'POST',
+        body: Object.keys(body).length ? body : undefined,
+      }),
+      invalidatesTags: ['Return', 'Refund', 'AdminOrder'],
+    }),
+
     refunds: build.query({
       query: ({ status, page = 0, size = 20 } = {}) => ({
         url: '/admin/refunds',
@@ -70,6 +86,8 @@ export const {
   useCodCollectedMutation,
   useAdminCancelMutation,
   useLazyAdminInvoiceQuery,
+  useReturnsQuery,
+  useReturnActionMutation,
   useRefundsQuery,
   useRetryRefundMutation,
 } = adminOrdersApi

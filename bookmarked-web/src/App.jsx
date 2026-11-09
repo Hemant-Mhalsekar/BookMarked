@@ -20,6 +20,7 @@ import AdminLayout from './features/admin/AdminLayout'
 import AdminOrderPage from './features/admin/orders/AdminOrderPage'
 import AdminOrdersPage from './features/admin/orders/AdminOrdersPage'
 import AdminRefundsPage from './features/admin/orders/AdminRefundsPage'
+import AdminReturnsPage from './features/admin/orders/AdminReturnsPage'
 import BookDetailsPage from './features/catalog/BookDetailsPage'
 import BooksPage from './features/catalog/BooksPage'
 import BookmarksPage from './features/bookmarks/BookmarksPage'
@@ -97,6 +98,9 @@ export default function App() {
             <Route element={<ProtectedRoute staffOnly permission="ORDER_READ" />}>
               <Route path="orders" element={<AdminOrdersPage />} />
               <Route path="orders/:orderNumber" element={<AdminOrderPage />} />
+            </Route>
+            <Route element={<ProtectedRoute staffOnly permission="RETURN_MANAGE" />}>
+              <Route path="returns" element={<AdminReturnsPage />} />
             </Route>
             <Route element={<ProtectedRoute staffOnly permission="REFUND_ISSUE" />}>
               <Route path="refunds" element={<AdminRefundsPage />} />
