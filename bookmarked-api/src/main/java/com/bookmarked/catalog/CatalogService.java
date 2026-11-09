@@ -88,7 +88,7 @@ public class CatalogService {
         while (!frontier.isEmpty()) {
             List<Long> fresh = frontier.stream().filter(ids::add).toList();
             frontier = fresh.isEmpty() ? List.of()
-                    : categories.findByParentIdIn(fresh).stream()
+                    : categories.findByParent_IdIn(fresh).stream()
                     .filter(Category::isActive).map(Category::getId).toList();
         }
         return ids;

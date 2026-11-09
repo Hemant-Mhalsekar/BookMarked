@@ -76,7 +76,7 @@ public class AdminCategoryService {
             if (parent.getParent() != null) {
                 throw ApiException.badRequest("INVALID_PARENT", "Subcategories can only sit under a top-level category.");
             }
-            if (c.getId() != null && categories.findByParentIdIn(List.of(c.getId())).stream().findAny().isPresent()) {
+            if (c.getId() != null && categories.findByParent_IdIn(List.of(c.getId())).stream().findAny().isPresent()) {
                 throw ApiException.badRequest("INVALID_PARENT",
                         "This category has subcategories, so it must stay top-level.");
             }
