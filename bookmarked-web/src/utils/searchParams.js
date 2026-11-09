@@ -11,7 +11,7 @@ export const SORT_OPTIONS = [
 
 export const PAGE_SIZE = 12
 
-const FILTER_KEYS = ['q', 'category', 'format', 'minPrice', 'maxPrice', 'minRating', 'inStock', 'sort', 'page']
+const FILTER_KEYS = ['q', 'author', 'category', 'format', 'minPrice', 'maxPrice', 'minRating', 'inStock', 'sort', 'page']
 
 /** URLSearchParams -> filter object with defaults. `page` is 1-based in the URL. */
 export function readFilters(searchParams) {
@@ -19,6 +19,7 @@ export function readFilters(searchParams) {
   const page = Number.parseInt(get('page'), 10)
   return {
     q: get('q'),
+    author: get('author'),
     category: get('category'),
     format: get('format'),
     minPrice: get('minPrice'),
@@ -47,6 +48,7 @@ export function writeFilters(filters) {
 export function toApiParams(filters) {
   const params = { page: Math.max(0, filters.page - 1), size: PAGE_SIZE }
   if (filters.q.trim()) params.q = filters.q.trim()
+  if (filters.author?.trim()) params.author = filters.author.trim()
   if (filters.category) params.category = filters.category
   if (filters.format) params.format = filters.format
   for (const key of ['minPrice', 'maxPrice', 'minRating']) {

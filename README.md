@@ -10,8 +10,8 @@ A full-stack online bookstore for **paperback, hardcover and e-books**, built wi
 | **Your Stack** | Shopping cart |
 | **My Library** | Purchased e-books, readable in the browser |
 
-> Status: **Phase 1 · Steps 1–2 done**: setup, authentication, and the catalog (books, formats, search, admin).
-> Next: Step 3, Your Stack (cart), Bookmarks (wishlist) and the full book page.
+> Status: **Phase 1 · Steps 1–3 done**: setup, authentication, catalog, Your Stack and Bookmarks.
+> Next: Step 4, checkout with Razorpay (test mode), Cash on Delivery and stock reservation.
 
 ## Tech stack
 
@@ -151,6 +151,27 @@ cd bookmarked-web && npm test       # Vitest
 
 In the `dev` profile, 16 sample books are added to an empty database (`app.seed.demo-catalog`). Their ISBNs are
 checksum-valid but fictional.
+
+## What Step 3 includes
+
+**Your Stack (cart)**
+
+- `GET /api/cart`, `POST /api/cart/items`, `PATCH|DELETE /api/cart/items/{id}`, `POST /api/cart/items/{id}/save-for-later`,
+  `POST /api/cart/accept-prices`, `POST /api/cart/merge`, and a public `POST /api/cart/preview` for guests
+- Prices are always read live on the server; one `PricingService` works out MRP total, discount, delivery
+  (₹40 below ₹499, free above, none for e-book-only) and the total, and checkout will reuse it
+- Rules: e-books are one copy and can't be bought twice; physical books max 10 and never more than in stock;
+  hidden, sold-out or over-stock lines stay visible but block checkout; price changes since adding are flagged
+- Guests keep their Stack in the browser; it merges into the account at login (quantities added and capped)
+- Staff accounts can't shop
+
+**Bookmarks (wishlist)**: `GET /api/bookmarks`, `GET /api/bookmarks/ids`, `PUT|DELETE /api/bookmarks/{bookId}` (idempotent)
+
+**Discovery**: `GET /api/books/{slug}/related` (more by the author, similar by category), `GET /api/books/by-ids`,
+and recently viewed (`/api/recently-viewed`, stored per user; guests keep it in the browser and it merges at login)
+
+**Frontend**: Your Stack page, Bookmarks page with "Move to Your Stack", bookmark icons on every book,
+full book page (Add to Stack, Buy now, Bookmark, related rows), home rows for recently viewed, top rated and e-books
 
 ## Configuration
 

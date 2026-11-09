@@ -3,7 +3,7 @@ import { activeFilterCount, PAGE_SIZE, readFilters, toApiParams, writeFilters } 
 describe('book search URL state', () => {
   it('reads defaults from an empty URL', () => {
     expect(readFilters(new URLSearchParams(''))).toEqual({
-      q: '', category: '', format: '', minPrice: '', maxPrice: '', minRating: '',
+      q: '', author: '', category: '', format: '', minPrice: '', maxPrice: '', minRating: '',
       inStock: false, sort: 'relevance', page: 1,
     })
   })

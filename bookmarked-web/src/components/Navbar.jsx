@@ -3,6 +3,8 @@ import { useSelector } from 'react-redux'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { selectUser } from '../features/auth/authSlice'
 import { useLogoutMutation } from '../features/auth/authApi'
+import { BRAND } from '../brand'
+import { useStack } from '../features/stack/useStack'
 import SearchBox from './SearchBox'
 
 const navLink = ({ isActive }) =>
@@ -13,6 +15,7 @@ export default function Navbar() {
   const [logout, { isLoading }] = useLogoutMutation()
   const [open, setOpen] = useState(false)
   const navigate = useNavigate()
+  const stack = useStack()
 
   const handleLogout = async () => {
     setOpen(false)
@@ -41,6 +44,26 @@ export default function Navbar() {
           <NavLink to="/books" className={navLink}>
             Browse
           </NavLink>
+          {user && user.accountType !== 'STAFF' && (
+            <NavLink to="/bookmarks" className={navLink}>
+              {BRAND.wishlist}
+            </NavLink>
+          )}
+          {!stack.isStaff && (
+            <NavLink to="/stack" className={navLink} aria-label={`${BRAND.cart}, ${stack.count} items`}>
+              <span className="relative inline-flex items-center gap-1.5">
+                <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                  <path d="M4 7h16M5 12h14M6 17h12" strokeLinecap="round" />
+                </svg>
+                <span className="hidden lg:inline">{BRAND.cart}</span>
+                {stack.count > 0 && (
+                  <span className="absolute -right-2 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-amber-400 px-1 text-[10px] font-bold text-slate-900 lg:static lg:ml-0.5">
+                    {stack.count}
+                  </span>
+                )}
+              </span>
+            </NavLink>
+          )}
           {user?.accountType === 'STAFF' && (
             <NavLink to="/admin" className={navLink}>
               Admin

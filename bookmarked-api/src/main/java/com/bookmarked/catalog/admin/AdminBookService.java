@@ -45,7 +45,7 @@ import java.util.Set;
 public class AdminBookService {
 
     /** Paths under /api/books that must never be used as a slug. */
-    private static final Set<String> RESERVED_SLUGS = Set.of("suggest", "new", "search");
+    private static final Set<String> RESERVED_SLUGS = Set.of("suggest", "new", "search", "by-ids");
 
     private final BookRepository books;
     private final BookVariantRepository variants;
