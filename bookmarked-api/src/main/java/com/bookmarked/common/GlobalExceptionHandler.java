@@ -3,6 +3,7 @@ package com.bookmarked.common;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -85,6 +86,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiError> handleNoResource(NoResourceFoundException ex, HttpServletRequest req) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiError.of(404, "NOT_FOUND", "Not found.", req.getRequestURI()));
+    }
+
+    /** A lock wait timed out or MySQL picked this request as a deadlock victim: safe to retry. */
+    @ExceptionHandler(PessimisticLockingFailureException.class)
+    public ResponseEntity<ApiError> handleLockFailure(PessimisticLockingFailureException ex, HttpServletRequest req) {
+        log.warn("Lock conflict on {} {}: {}", req.getMethod(), req.getRequestURI(), ex.getMostSpecificCause().getMessage());
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of(409, "BUSY", "Lots of people are ordering right now. Please try again.", req.getRequestURI()));
     }
 
     @ExceptionHandler(Exception.class)

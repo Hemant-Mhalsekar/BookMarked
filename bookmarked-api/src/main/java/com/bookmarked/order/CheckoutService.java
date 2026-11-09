@@ -159,6 +159,8 @@ public class CheckoutService {
         for (Purchase p : purchases) {
             order.getItems().add(new OrderItem(order, p.variant(), p.quantity()));
         }
+        // 6. Stock first (see reserveForNewOrder for why the order matters)
+        ops.reserveForNewOrder(order.getItems());
         try {
             order = orders.saveAndFlush(order);
         } catch (DataIntegrityViolationException e) {
@@ -167,8 +169,8 @@ public class CheckoutService {
         order.setOrderNumber("BM-" + NUMBER_DATE.format(clock.instant()) + "-" + String.format("%06d", order.getId()));
         orders.flush();
 
-        // 6. Stock: held for online payment, sold outright for COD
-        ops.takeStock(order, cod ? InventoryMovement.Reason.SALE : InventoryMovement.Reason.RESERVATION);
+        // Stock is held for online payment and sold outright for COD
+        ops.recordStockTaken(order, cod ? InventoryMovement.Reason.SALE : InventoryMovement.Reason.RESERVATION);
 
         if (cod) {
             ops.fulfil(order);

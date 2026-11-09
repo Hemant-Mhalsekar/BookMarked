@@ -124,9 +124,9 @@ class CheckoutIntegrationTest {
         String key = "key-" + UUID.randomUUID();
         JsonNode created = createOrder(c, Map.of("source", "CART", "paymentMethod", "ONLINE", "addressId", address), key, 201);
         assertThat(created.get("status").asText()).isEqualTo("PENDING_PAYMENT");
-        // 2 × 699 + 399 = 1797, free delivery
-        assertThat(created.get("total").decimalValue()).isEqualByComparingTo("1797");
-        assertThat(created.get("amountPaise").asLong()).isEqualTo(179700L);
+        // 2 × 699 + 150 (e-book) = 1548, free delivery
+        assertThat(created.get("total").decimalValue()).isEqualByComparingTo("1548");
+        assertThat(created.get("amountPaise").asLong()).isEqualTo(154800L);
         assertThat(created.get("keyId").asText()).isEqualTo("rzp_test_dummy");
         assertThat(created.get("prefill").get("email").asText()).isEqualTo(c.email());
         assertThat(stock(book.paperback())).isEqualTo(3);     // reserved
@@ -152,7 +152,7 @@ class CheckoutIntegrationTest {
         assertThat(stock(book.paperback())).isEqualTo(3);
 
         // the webhook for the same payment arrives later: nothing changes, and a re-delivery is ignored
-        String body = webhookBody("payment.captured", "pay_FULL1", rzpOrder, 179700L);
+        String body = webhookBody("payment.captured", "pay_FULL1", rzpOrder, 154800L);
         assertThat(sendWebhook(body, "evt_full_1", 200).get("status").asText()).isEqualTo("ALREADY_CONFIRMED");
         assertThat(sendWebhook(body, "evt_full_1", 200).get("status").asText()).isEqualTo("IGNORED");
 
@@ -187,10 +187,13 @@ class CheckoutIntegrationTest {
         String number = created.get("orderNumber").asText();
 
         // forged webhook
-        String forged = webhookBody("payment.captured", "pay_W1", rzpOrder, 45000L);
+        String forged = webhookBody("payment.captured", "pay_W1", rzpOrder, 49000L);
         mvc.perform(post("/api/webhooks/razorpay").contentType(MediaType.APPLICATION_JSON).content(forged)
                         .header("X-Razorpay-Signature", "deadbeef"))
                 .andExpect(status().isBadRequest());
+
+        // ₹450 + ₹40 delivery = ₹490
+        assertThat(created.get("amountPaise").asLong()).isEqualTo(49000L);
 
         // wrong amount: not confirmed
         assertThat(sendWebhook(webhookBody("payment.captured", "pay_W1", rzpOrder, 100L), "evt_w_1", 200)
@@ -198,7 +201,7 @@ class CheckoutIntegrationTest {
         assertThat(order(c, number).get("status").asText()).isEqualTo("PENDING_PAYMENT");
 
         // right amount: confirmed
-        assertThat(sendWebhook(webhookBody("payment.captured", "pay_W1", rzpOrder, 45000L), "evt_w_2", 200)
+        assertThat(sendWebhook(webhookBody("payment.captured", "pay_W1", rzpOrder, 49000L), "evt_w_2", 200)
                 .get("status").asText()).isEqualTo("CONFIRMED");
         assertThat(order(c, number).get("status").asText()).isEqualTo("CONFIRMED");
     }
@@ -217,27 +220,30 @@ class CheckoutIntegrationTest {
 
         ExecutorService pool = Executors.newFixedThreadPool(buyers);
         CountDownLatch start = new CountDownLatch(1);
-        List<Future<Integer>> results = new ArrayList<>();
+        List<Future<String>> results = new ArrayList<>();
         for (int i = 0; i < buyers; i++) {
             Customer c = customers.get(i);
             long address = addresses.get(i);
             results.add(pool.submit(() -> {
                 start.await();
-                return mvc.perform(as(c, post("/api/checkout/create-order")).contentType(MediaType.APPLICATION_JSON)
+                var res = mvc.perform(as(c, post("/api/checkout/create-order")).contentType(MediaType.APPLICATION_JSON)
                                 .content(json.writeValueAsString(Map.of("source", "BUY_NOW", "variantId", book.paperback(),
                                         "quantity", 1, "paymentMethod", "ONLINE", "addressId", address))))
-                        .andReturn().getResponse().getStatus();
+                        .andReturn().getResponse();
+                // "201" for the winner, "409 OUT_OF_STOCK" for the rest (anything else, e.g. a deadlock, fails the test)
+                return res.getStatus() == 201 ? "201"
+                        : res.getStatus() + " " + json.readTree(res.getContentAsString()).path("error").asText();
             }));
         }
         start.countDown();
-        List<Integer> statuses = new ArrayList<>();
-        for (Future<Integer> f : results) {
+        List<String> statuses = new ArrayList<>();
+        for (Future<String> f : results) {
             statuses.add(f.get(60, TimeUnit.SECONDS));
         }
         pool.shutdown();
 
-        assertThat(statuses).filteredOn(s -> s == 201).hasSize(1);
-        assertThat(statuses).filteredOn(s -> s == 409).hasSize(buyers - 1);
+        assertThat(statuses).filteredOn("201"::equals).hasSize(1);
+        assertThat(statuses).filteredOn("409 OUT_OF_STOCK"::equals).as("all results: %s", statuses).hasSize(buyers - 1);
         assertThat(stock(book.paperback())).isZero();
     }
 
@@ -282,7 +288,8 @@ class CheckoutIntegrationTest {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.error").value("PAYMENT_REFUNDED"));
 
-        verify(razorpay).refund(eq("pay_LATE_NO"), eq(25000L));
+        // the whole payment comes back: ₹250 + ₹40 delivery
+        verify(razorpay).refund(eq("pay_LATE_NO"), eq(29000L));
         JsonNode o = order(late, number);
         assertThat(o.get("status").asText()).isEqualTo("CANCELLED");
         assertThat(o.get("paymentStatus").asText()).isEqualTo("REFUNDED");

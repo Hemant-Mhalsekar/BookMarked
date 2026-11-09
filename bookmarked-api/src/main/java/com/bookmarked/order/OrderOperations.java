@@ -59,19 +59,34 @@ public class OrderOperations {
      * Takes stock for every physical item, or throws 409 OUT_OF_STOCK. The caller's
      * transaction rolls back whatever was already taken.
      */
-    public void takeStock(PurchaseOrder order, InventoryMovement.Reason reason) {
-        for (OrderItem item : physical(order)) {
-            Long variantId = item.getVariant().getId();
-            if (variants.reserveStock(variantId, item.getQuantity()) != 1) {
+    /**
+     * Takes stock for a new order <b>before</b> the order row is inserted.
+     * Inserting order_items puts a shared (foreign-key) lock on each book_variants
+     * row; if that came first, concurrent buyers would each hold a shared lock and
+     * then wait for an exclusive one, and MySQL would kill some of them as
+     * deadlocks. Taking the exclusive lock first makes buyers queue instead, and
+     * going in variant-id order keeps two multi-book orders from deadlocking.
+     */
+    public void reserveForNewOrder(List<OrderItem> items) {
+        List<OrderItem> sorted = items.stream().filter(i -> i.getFormat().isPhysical())
+                .sorted(java.util.Comparator.comparing(i -> i.getVariant().getId())).toList();
+        for (OrderItem item : sorted) {
+            if (variants.reserveStock(item.getVariant().getId(), item.getQuantity()) != 1) {
                 throw ApiException.conflict("OUT_OF_STOCK", "Sorry, \"" + item.getTitleSnapshot() + "\" ("
                         + item.getFormat().name().toLowerCase(Locale.ROOT) + ") just ran out in that quantity.");
             }
-            movements.save(new InventoryMovement(variantId, -item.getQuantity(), reason, order.getOrderNumber(),
-                    null, null));
         }
     }
 
-    /** Like {@link #takeStock} but all-or-nothing without throwing (used for late payments). */
+    /** Writes the inventory ledger for stock already taken by {@link #reserveForNewOrder}. */
+    public void recordStockTaken(PurchaseOrder order, InventoryMovement.Reason reason) {
+        for (OrderItem item : physical(order)) {
+            movements.save(new InventoryMovement(item.getVariant().getId(), -item.getQuantity(), reason,
+                    order.getOrderNumber(), null, null));
+        }
+    }
+
+    /** Like {@link #reserveForNewOrder} but for an existing order, all-or-nothing without throwing (used for late payments). */
     public boolean tryRetakeStock(PurchaseOrder order) {
         List<OrderItem> taken = new ArrayList<>();
         for (OrderItem item : physical(order)) {
