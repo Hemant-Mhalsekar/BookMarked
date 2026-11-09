@@ -319,7 +319,17 @@ class AuthFlowIntegrationTest {
 
     private Account newAccount() {
         int n = SEQ.incrementAndGet();
-        return new Account("Reader " + n, "reader" + n + "@example.com", "98765" + String.format("%05d", n));
+        // Names may only contain letters, so the number is spelled with letters (101 -> "Reader Bab").
+        return new Account("Reader " + lettersFor(n), "reader" + n + "@example.com", "98765" + String.format("%05d", n));
+    }
+
+    private static String lettersFor(int n) {
+        StringBuilder sb = new StringBuilder();
+        for (char c : Integer.toString(n).toCharArray()) {
+            sb.append((char) ('a' + (c - '0')));
+        }
+        sb.setCharAt(0, Character.toUpperCase(sb.charAt(0)));
+        return sb.toString();
     }
 
     /** Registers and returns the raw email-verification token captured from the mail mock. */
