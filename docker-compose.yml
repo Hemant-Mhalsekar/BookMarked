@@ -1,0 +1,62 @@
+# BookMarked local stack
+#
+#   Everything:            docker compose up --build        → http://localhost:3000
+#   Only DB + mail (dev):  docker compose up -d mysql mailpit
+#                          then run the API from your IDE and `npm run dev` in bookmarked-web
+#
+#   Emails sent by the app: http://localhost:8025 (Mailpit)
+
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: bookmarked
+      MYSQL_USER: ${DB_USERNAME:-bookmarked}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-bookmarked}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-rootpass}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  mailpit:
+    image: axllent/mailpit:v1.21
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # web inbox
+
+  api:
+    build: ./bookmarked-api
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_URL: jdbc:mysql://mysql:3306/bookmarked?serverTimezone=UTC&useSSL=false&allowPublicKeyRetrieval=true
+      DB_USERNAME: ${DB_USERNAME:-bookmarked}
+      DB_PASSWORD: ${DB_PASSWORD:-bookmarked}
+      MAIL_HOST: mailpit
+      MAIL_PORT: 1025
+      FRONTEND_URL: http://localhost:3000
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me-dev-only-secret-change-me-0123456789}
+      COOKIE_SECURE: "false"
+      SUPER_ADMIN_EMAIL: ${SUPER_ADMIN_EMAIL:-admin@bookmarked.local}
+      SUPER_ADMIN_PASSWORD: ${SUPER_ADMIN_PASSWORD:-Admin@12345}
+      SUPER_ADMIN_PHONE: ${SUPER_ADMIN_PHONE:-9000000001}
+    ports:
+      - "8080:8080"
+
+  web:
+    build: ./bookmarked-web
+    depends_on:
+      - api
+    ports:
+      - "3000:80"
+
+volumes:
+  mysql-data:

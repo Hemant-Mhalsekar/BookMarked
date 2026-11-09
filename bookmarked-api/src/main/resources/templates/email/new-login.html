@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body th:replace="~{email/layout :: page(~{::section})}">
+<section>
+    <p>Hi <span th:text="${name}">there</span>,</p>
+    <p>Your BookMarked account was just signed in to from a new device.</p>
+    <table role="presentation" cellpadding="6" style="font-size:14px;margin:12px 0;">
+        <tr><td style="color:#71717a;">When</td><td th:text="${when}"></td></tr>
+        <tr><td style="color:#71717a;">Device</td><td th:text="${device}"></td></tr>
+        <tr><td style="color:#71717a;">IP address</td><td th:text="${ip}"></td></tr>
+    </table>
+    <p>If this was you, no action is needed. If not, <a th:href="${securityLink}">review your active sessions</a>
+        and change your password.</p>
+</section>
+</body>
+</html>

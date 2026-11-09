@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body th:replace="~{email/layout :: page(~{::section})}">
+<section>
+    <p>Hi <span th:text="${name}">there</span>,</p>
+    <p>We noticed several failed sign-in attempts on your BookMarked account, so we've locked it for
+        <strong th:text="${minutes}">15</strong> minutes.</p>
+    <p>If this wasn't you, we recommend you <a th:href="${resetLink}">reset your password</a>.</p>
+</section>
+</body>
+</html>

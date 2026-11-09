@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body th:fragment="page(content)" style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;color:#18181b;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:24px 0;">
+    <tr>
+        <td align="center">
+            <table role="presentation" width="560" cellpadding="0" cellspacing="0"
+                   style="max-width:560px;width:100%;background:#ffffff;border-radius:12px;overflow:hidden;">
+                <tr>
+                    <td style="background:#1e3a8a;padding:20px 28px;color:#ffffff;font-size:20px;font-weight:bold;">
+                        BookMarked
+                        <div style="font-size:12px;font-weight:normal;color:#c7d2fe;margin-top:2px;">Books worth coming back to</div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:28px;font-size:15px;line-height:1.6;">
+                        <div th:replace="${content}"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding:16px 28px;background:#fafafa;color:#71717a;font-size:12px;">
+                        You received this email because of activity on your BookMarked account.
+                        If this wasn't you, please reset your password.
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# Secrets
+.env
+.env.local
+*.env
+!.env.example
+
+# Java / Maven
+bookmarked-api/target/
+*.class
+*.log
+hs_err_pid*
+
+# Node
+bookmarked-web/node_modules/
+bookmarked-web/dist/
+npm-debug.log*
+
+# IDEs / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
