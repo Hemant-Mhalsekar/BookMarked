@@ -5,6 +5,8 @@ import { selectUser } from '../auth/authSlice'
 // Each section is shown only to staff holding its permission; the API enforces the same rules.
 const SECTIONS = [
   { to: '/admin', label: 'Dashboard', end: true },
+  { to: '/admin/orders', label: 'Orders', permission: 'ORDER_READ' },
+  { to: '/admin/refunds', label: 'Refunds', permission: 'REFUND_ISSUE' },
   { to: '/admin/books', label: 'Books', permission: 'BOOK_READ' },
   { to: '/admin/categories', label: 'Categories', permission: 'BOOK_READ' },
 ]

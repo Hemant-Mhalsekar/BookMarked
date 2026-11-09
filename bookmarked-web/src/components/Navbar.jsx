@@ -5,6 +5,8 @@ import { selectUser } from '../features/auth/authSlice'
 import { useLogoutMutation } from '../features/auth/authApi'
 import { BRAND } from '../brand'
 import { useStack } from '../features/stack/useStack'
+import NotificationBell from '../features/notifications/NotificationBell'
+import Logo from './Logo'
 import SearchBox from './SearchBox'
 
 const navLink = ({ isActive }) =>
@@ -31,7 +33,7 @@ export default function Navbar() {
     <header className="sticky top-0 z-30 bg-brand-800 shadow">
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
         <Link to="/" className="flex shrink-0 items-center gap-2 text-lg font-bold text-white">
-          <img src="/favicon.svg" alt="" className="h-7 w-7" />
+          <Logo className="h-7 w-7" />
           <span className="leading-tight">
             BookMarked
             <span className="hidden text-[11px] font-normal text-brand-100 md:block">Books worth coming back to</span>
@@ -70,8 +72,10 @@ export default function Navbar() {
             </NavLink>
           )}
 
+          {user && <NotificationBell />}
+
           {user ? (
-            <div className="relative ml-2">
+            <div className="relative ml-1">
               <button
                 type="button"
                 onClick={() => setOpen((o) => !o)}
@@ -113,6 +117,9 @@ export default function Navbar() {
                       </Link>
                     </>
                   )}
+                  <Link role="menuitem" to="/notifications" className="block px-4 py-2 hover:bg-slate-50" onClick={() => setOpen(false)}>
+                    Notifications
+                  </Link>
                   <Link
                     role="menuitem"
                     to="/account/security"

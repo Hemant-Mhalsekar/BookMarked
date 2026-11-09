@@ -17,9 +17,13 @@ import AdminBookFormPage from './features/admin/AdminBookFormPage'
 import AdminBooksPage from './features/admin/AdminBooksPage'
 import AdminCategoriesPage from './features/admin/AdminCategoriesPage'
 import AdminLayout from './features/admin/AdminLayout'
+import AdminOrderPage from './features/admin/orders/AdminOrderPage'
+import AdminOrdersPage from './features/admin/orders/AdminOrdersPage'
+import AdminRefundsPage from './features/admin/orders/AdminRefundsPage'
 import BookDetailsPage from './features/catalog/BookDetailsPage'
 import BooksPage from './features/catalog/BooksPage'
 import BookmarksPage from './features/bookmarks/BookmarksPage'
+import NotificationsPage from './features/notifications/NotificationsPage'
 import CheckoutPage from './features/checkout/CheckoutPage'
 import OrderDetailPage from './features/orders/OrderDetailPage'
 import OrdersPage from './features/orders/OrdersPage'
@@ -71,6 +75,7 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="account" element={<AccountPage />} />
           <Route path="account/security" element={<SecurityPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
         </Route>
 
         <Route element={<ProtectedRoute customerOnly />}>
@@ -88,6 +93,13 @@ export default function App() {
             <Route element={<ProtectedRoute staffOnly permission="BOOK_READ" />}>
               <Route path="books" element={<AdminBooksPage />} />
               <Route path="categories" element={<AdminCategoriesPage />} />
+            </Route>
+            <Route element={<ProtectedRoute staffOnly permission="ORDER_READ" />}>
+              <Route path="orders" element={<AdminOrdersPage />} />
+              <Route path="orders/:orderNumber" element={<AdminOrderPage />} />
+            </Route>
+            <Route element={<ProtectedRoute staffOnly permission="REFUND_ISSUE" />}>
+              <Route path="refunds" element={<AdminRefundsPage />} />
             </Route>
             <Route element={<ProtectedRoute staffOnly permission="BOOK_WRITE" />}>
               <Route path="books/new" element={<AdminBookFormPage />} />

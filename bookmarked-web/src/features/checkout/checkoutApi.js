@@ -45,8 +45,25 @@ export const checkoutApi = api.injectEndpoints({
 
     // Orders
     orders: build.query({
-      query: ({ page = 0, size = 10 } = {}) => ({ url: '/orders', params: { page, size } }),
+      query: ({ tab = 'ALL', page = 0, size = 10 } = {}) => ({ url: '/orders', params: { tab, page, size } }),
       providesTags: ['Order'],
+    }),
+    cancelOrder: build.mutation({
+      // itemIds omitted = everything that can still be cancelled
+      query: ({ orderNumber, itemIds, reason }) => ({
+        url: `/orders/${encodeURIComponent(orderNumber)}/cancel`,
+        method: 'POST',
+        body: { itemIds: itemIds ?? null, reason: reason || null },
+      }),
+      invalidatesTags: ['Order', 'Notification'],
+    }),
+    // Returns a temporary object URL for the PDF (a string, so it can live in the cache)
+    invoice: build.query({
+      query: (orderNumber) => ({
+        url: `/orders/${encodeURIComponent(orderNumber)}/invoice`,
+        responseHandler: async (res) => (res.ok ? URL.createObjectURL(await res.blob()) : res.json()),
+      }),
+      keepUnusedDataFor: 0,
     }),
     order: build.query({
       query: (orderNumber) => `/orders/${encodeURIComponent(orderNumber)}`,
@@ -66,4 +83,6 @@ export const {
   useRetryPaymentMutation,
   useOrdersQuery,
   useOrderQuery,
+  useCancelOrderMutation,
+  useLazyInvoiceQuery,
 } = checkoutApi

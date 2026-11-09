@@ -8,7 +8,8 @@ import com.bookmarked.order.CheckoutDtos.VerifyRequest;
 import com.bookmarked.order.OrderEnums.OrderStatus;
 import com.bookmarked.order.OrderEnums.PaymentStatus;
 import com.bookmarked.payment.Money;
-import com.bookmarked.payment.RazorpayGateway;
+import com.bookmarked.notification.NotificationService;
+import com.bookmarked.notification.NotificationService.Type;
 import com.bookmarked.payment.RazorpayProperties;
 import com.bookmarked.payment.Signatures;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -46,19 +47,21 @@ public class PaymentService {
 
     private final PurchaseOrderRepository orders;
     private final OrderOperations ops;
-    private final RazorpayGateway razorpay;
+    private final RefundService refunds;
+    private final NotificationService notifications;
     private final RazorpayProperties props;
     private final OrderQueryService orderQueries;
     private final ObjectMapper json;
     private final JdbcTemplate jdbc;
     private final Clock clock;
 
-    public PaymentService(PurchaseOrderRepository orders, OrderOperations ops, RazorpayGateway razorpay,
-                          RazorpayProperties props, OrderQueryService orderQueries, ObjectMapper json,
+    public PaymentService(PurchaseOrderRepository orders, OrderOperations ops, RefundService refunds,
+                          NotificationService notifications, RazorpayProperties props, OrderQueryService orderQueries, ObjectMapper json,
                           JdbcTemplate jdbc, Clock clock) {
         this.orders = orders;
         this.ops = ops;
-        this.razorpay = razorpay;
+        this.refunds = refunds;
+        this.notifications = notifications;
         this.props = props;
         this.orderQueries = orderQueries;
         this.json = json;
@@ -148,7 +151,7 @@ public class PaymentService {
             case "refund.processed" -> {
                 String refundId = textOrNull(root.path("payload").path("refund").path("entity"), "id");
                 if (refundId != null) {
-                    jdbc.update("update refunds set status = 'PROCESSED' where razorpay_refund_id = ?", refundId);
+                    refunds.markProcessed(refundId);
                 }
             }
             default -> log.debug("Webhook event {} not handled", event);
@@ -212,27 +215,27 @@ public class PaymentService {
             return Outcome.CONFIRMED_LATE;
         }
 
-        long amount = Money.toPaise(order.getTotal());
-        String refundId = null;
-        String status = "PENDING";
-        try {
-            refundId = razorpay.refund(paymentId, amount);
-        } catch (RazorpayGateway.GatewayException e) {
-            status = "FAILED";
-            log.error("Automatic refund failed for {} ({}); retry from admin", order.getOrderNumber(), paymentId, e);
-        }
-        jdbc.update("insert into refunds (order_id, razorpay_refund_id, amount, status, reason, created_at) values (?, ?, ?, ?, 'LATE_PAYMENT', ?)",
-                order.getId(), refundId, order.getTotal(), status, Timestamp.from(now));
+        refunds.issue(order, order.getTotal(), "LATE_PAYMENT");
         order.setStatus(OrderStatus.CANCELLED);
         order.setPaymentStatus(PaymentStatus.REFUNDED);
+        notifications.notifyWithEmail(order.getUserId(), Type.ORDER_CANCELLED,
+                "Order " + order.getOrderNumber() + " couldn't be completed",
+                "Your payment arrived after the books were reserved for someone else, so we've refunded "
+                        + OrderOperations.rupees(order.getTotal()) + ".",
+                "/orders/" + order.getOrderNumber(), "View order");
         log.warn("Late payment for {} refunded: stock no longer available", order.getOrderNumber());
         return Outcome.REFUNDED;
     }
 
     private void markFailed(Long orderId) {
         orders.findById(orderId)
-                .filter(o -> o.getStatus() == OrderStatus.PENDING_PAYMENT)
-                .ifPresent(o -> o.setPaymentStatus(PaymentStatus.FAILED));
+                .filter(o -> o.getStatus() == OrderStatus.PENDING_PAYMENT && o.getPaymentStatus() != PaymentStatus.FAILED)
+                .ifPresent(o -> {
+                    o.setPaymentStatus(PaymentStatus.FAILED);
+                    notifications.notify(o.getUserId(), Type.PAYMENT_FAILED, "Payment didn't go through",
+                            "Your books are still held for a few minutes. Try paying again from your order.",
+                            "/orders/" + o.getOrderNumber());
+                });
     }
 
     // ------------------------------------------------------------------

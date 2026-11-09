@@ -206,6 +206,36 @@ Without them, online payment answers "payments unavailable" and COD still works.
 [Razorpay's test page](https://razorpay.com/docs/payments/payments/test-card-details/). The webhook needs a public URL
 (for example an ngrok tunnel to port 8080) and `RAZORPAY_WEBHOOK_SECRET`; checkout works without it.
 
+## What Step 5 includes (part 1)
+
+**Fulfilment (staff, `/api/admin/orders`)**: search by order number, email or phone and filter by order or item status;
+move physical items PLACED → PROCESSING → SHIPPED (courier, tracking number, expected date) → DELIVERED, one step at a
+time (no skipping, no going back; repeating a step is a no-op); record COD cash collected after delivery. Every change
+is in the item's history with the staff member who made it. The order becomes COMPLETED when every item is finished.
+
+**Cancellation** (`POST /api/orders/{n}/cancel` for customers, `/api/admin/orders/{n}/cancel` for staff with a reason)
+
+- Physical items still PLACED or PROCESSING; partial cancellation supported; e-books and shipped items can't be cancelled
+- Stock goes back (CANCEL in the inventory ledger)
+- Online orders are refunded through Razorpay what was paid for those items, plus the delivery fee once no physical
+  item is left. COD orders have nothing to refund
+- The order row is locked (`SELECT … FOR UPDATE`), so repeated or simultaneous requests can't refund twice
+  (a test fires four cancels at once and checks Razorpay is called exactly once)
+
+**Refunds**: every refund is recorded (PENDING → PROCESSED via Razorpay's `refund.processed` webhook). If Razorpay
+refuses or is unreachable, the cancellation still stands, the refund is marked FAILED, staff are notified, and they can
+retry from **Admin → Refunds**.
+
+**Notifications**: in-app (bell with unread count, polled every 30 s; `/notifications` page) plus email for shipped,
+delivered, cancelled and refund processed. Emails are sent only after the change is committed. Staff get new-order,
+low-stock and failed-refund alerts.
+
+**Invoices**: `GET /api/orders/{n}/invoice` (and the admin equivalent) returns a PDF built with Apache PDFBox.
+
+**Frontend**: order tabs (All, In progress, Delivered, Cancelled), per-item progress with courier and tracking,
+cancel with a refund preview, refunds and invoice download on the order page; admin Orders, order detail with
+pack / ship / deliver / cancel actions, Refunds with retry, and live counts on the admin dashboard.
+
 ## Configuration
 
 All settings come from environment variables; see [`.env.example`](.env.example).

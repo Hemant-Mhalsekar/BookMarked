@@ -5,6 +5,9 @@ import org.springframework.http.MediaType;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 
 import java.time.Duration;
@@ -48,7 +51,7 @@ public class RazorpayHttpGateway implements RazorpayGateway {
                     .body(JsonNode.class);
             return res.get("id").asText();
         } catch (RestClientException | NullPointerException e) {
-            throw new GatewayException("Could not create Razorpay order", e);
+            throw new GatewayException("Could not create Razorpay order: " + describe(e), e);
         }
     }
 
@@ -63,8 +66,24 @@ public class RazorpayHttpGateway implements RazorpayGateway {
                     .body(JsonNode.class);
             return res.get("id").asText();
         } catch (RestClientException | NullPointerException e) {
-            throw new GatewayException("Could not refund payment " + paymentId, e);
+            throw new GatewayException("Could not refund payment " + paymentId + ": " + describe(e), e);
         }
+    }
+
+    /** One readable line for the log, e.g. "Razorpay rejected the API keys (401)…". Never includes the keys. */
+    static String describe(Exception e) {
+        if (e instanceof HttpClientErrorException.Unauthorized) {
+            return "Razorpay rejected the API keys (401). Check RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are a matching Test Mode pair";
+        }
+        if (e instanceof HttpStatusCodeException http) {
+            String body = http.getResponseBodyAsString();
+            return "Razorpay answered " + http.getStatusCode().value()
+                    + (body.isBlank() ? "" : " " + (body.length() > 300 ? body.substring(0, 300) : body));
+        }
+        if (e instanceof ResourceAccessException) {
+            return "couldn't reach Razorpay (" + e.getMessage() + ")";
+        }
+        return e.getClass().getSimpleName() + (e.getMessage() == null ? "" : " " + e.getMessage());
     }
 
     private void requireKeys() {
