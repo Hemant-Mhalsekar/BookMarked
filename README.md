@@ -266,6 +266,26 @@ pack / ship / deliver / cancel actions, Refunds with retry, and live counts on t
   properties)
 - **Samples**: public at `/api/books/variants/{id}/sample`; "Read a free sample" on the book page; owners see "Read now"
 
+## What Step 7 includes (part 1): reviews and the account dashboard
+
+**Reviews** (`/api/books/{slug}/reviews`, `/api/reviews/{id}`)
+
+- Only buyers: e-books as soon as they're bought, printed books once delivered. One review per customer per book
+  (shared by all its formats); edit or delete your own
+- Rating 1–5, optional title (100), comment 10–2000 characters; HTML is stripped before saving
+- Book page: average, star distribution (click a bar to filter), sort by most helpful / newest / highest / lowest,
+  "Verified purchase", "Helpful" votes (one each, not on your own), and Report
+- Three reports hide a review automatically and alert moderators (**Admin → Reviews**, `REVIEW_MODERATE`), who
+  restore or remove it. The book's average and count are recalculated in the same transaction as every change
+- Reviews show "Hemant M.", never full surnames or emails; 5 review actions per minute per customer
+- After delivery, customers get a "How was it?" notification linking to the reviews
+
+**Account dashboard** (`/account`): a sidebar (a scrolling row on phones) with Overview, Profile, Orders, My Library,
+Bookmarks, Addresses, My reviews, Notifications and Security. The overview comes from one call
+(`GET /api/account/overview`): stats, continue reading, recent orders and things to do (verify email, finish a payment,
+have a return ready for pickup, books waiting for a review). Profile: change your name, or your mobile number with
+your password (it must not belong to another account).
+
 ## Configuration
 
 All settings come from environment variables; see [`.env.example`](.env.example).

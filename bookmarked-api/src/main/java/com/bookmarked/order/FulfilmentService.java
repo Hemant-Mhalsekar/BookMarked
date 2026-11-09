@@ -143,6 +143,10 @@ public class FulfilmentService {
             notifications.notifyWithEmail(order.getUserId(), Type.ORDER_DELIVERED, "Delivered: " + titles(moved),
                     "Enjoy your books! If something's wrong, you can request a return within 7 days.",
                     "/orders/" + order.getOrderNumber(), "View order");
+            // a little later in the inbox: ask for a review of each book
+            moved.stream().map(i -> i.getVariant().getBook()).distinct().forEach(book ->
+                    notifications.notify(order.getUserId(), Type.REVIEW_REQUEST, "How was " + book.getTitle() + "?",
+                            "Rate it to help other readers choose.", "/book/" + book.getSlug() + "#reviews"));
         }
         return order;
     }

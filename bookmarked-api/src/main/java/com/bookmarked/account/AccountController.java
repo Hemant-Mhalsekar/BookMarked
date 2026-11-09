@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -33,9 +34,35 @@ public class AccountController {
     private final AccountService accountService;
     private final RateLimitService rateLimit;
 
-    public AccountController(AccountService accountService, RateLimitService rateLimit) {
+    private final AccountOverviewService overview;
+
+    public AccountController(AccountService accountService, RateLimitService rateLimit,
+                             AccountOverviewService overview) {
+        this.overview = overview;
         this.accountService = accountService;
         this.rateLimit = rateLimit;
+    }
+
+    @Operation(summary = "Dashboard overview: stats, continue reading, recent orders, things to do")
+    @GetMapping("/overview")
+    public AccountOverviewService.Overview overview(@AuthenticationPrincipal AuthUser caller) {
+        return overview.overview(caller);
+    }
+
+    @Operation(summary = "Change my name")
+    @PatchMapping("/profile")
+    public UserDto updateName(@AuthenticationPrincipal AuthUser caller,
+                              @Valid @RequestBody AccountDtos.NameRequest req) {
+        rateLimit.check(Rule.PROFILE_CHANGE, "user:" + caller.id());
+        return accountService.updateName(caller, req.fullName());
+    }
+
+    @Operation(summary = "Change my mobile number (needs my password)")
+    @PostMapping("/phone")
+    public UserDto changePhone(@AuthenticationPrincipal AuthUser caller,
+                               @Valid @RequestBody AccountDtos.PhoneRequest req) {
+        rateLimit.check(Rule.PROFILE_CHANGE, "user:" + caller.id());
+        return accountService.changePhone(caller, req.phone(), req.password());
     }
 
     @Operation(summary = "Current user's profile, role and permissions")

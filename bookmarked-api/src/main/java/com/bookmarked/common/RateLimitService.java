@@ -22,7 +22,9 @@ public class RateLimitService {
         REGISTER(5, Duration.ofMinutes(10)),
         EMAIL_ACTION(3, Duration.ofMinutes(15)),
         REFRESH(30, Duration.ofMinutes(1)),
-        PASSWORD_CHANGE(5, Duration.ofMinutes(15));
+        PASSWORD_CHANGE(5, Duration.ofMinutes(15)),
+        REVIEW(5, Duration.ofMinutes(1)),
+        PROFILE_CHANGE(5, Duration.ofMinutes(15));
 
         final int capacity;
         final Duration period;

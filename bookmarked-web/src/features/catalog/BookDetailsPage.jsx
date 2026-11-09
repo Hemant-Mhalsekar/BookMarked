@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { BRAND } from '../../brand'
 import { Stars } from '../../components/BookCard'
 import BookCover from '../../components/BookCover'
@@ -10,6 +10,7 @@ import NotFoundPage from '../../pages/NotFoundPage'
 import { parseApiError } from '../../utils/errors'
 import { FORMAT_LABELS, formatPrice } from '../../utils/format'
 import { useLibraryIdsQuery } from '../library/libraryApi'
+import BookReviews from '../reviews/BookReviews'
 import { useStack } from '../stack/useStack'
 import { useBookQuery, useRelatedBooksQuery } from './catalogApi'
 import { useRecentBooks, useTrackView } from './recentlyViewed'
@@ -41,6 +42,13 @@ export default function BookDetailsPage() {
 
 function BookView({ book }) {
   useTrackView(book.id)
+  const { hash } = useLocation()
+  // links like /book/x#reviews (from "How was it?" notifications) land on the reviews
+  useEffect(() => {
+    if (hash !== '#reviews') return undefined
+    const t = setTimeout(() => document.getElementById('reviews')?.scrollIntoView({ behavior: 'smooth' }), 300)
+    return () => clearTimeout(t)
+  }, [hash])
   const { data: related } = useRelatedBooksQuery(book.slug)
   const recent = useRecentBooks(book.id)
 
@@ -73,7 +81,7 @@ function BookView({ book }) {
               </span>
             ))}
           </p>
-          <div className="mt-2"><Stars rating={book.avgRating} count={book.ratingCount} /></div>
+          <a href="#reviews" className="mt-2 inline-block"><Stars rating={book.avgRating} count={book.ratingCount} /></a>
           <div className="mt-3 flex flex-wrap gap-2">
             {book.categories.map((c) => (
               <Link key={c.id} to={`/books?category=${c.slug}`} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-slate-200">
@@ -99,6 +107,10 @@ function BookView({ book }) {
             </dl>
           </section>
         </div>
+      </div>
+
+      <div className="mt-14">
+        <BookReviews slug={book.slug} />
       </div>
 
       <div className="mt-14 space-y-12">
