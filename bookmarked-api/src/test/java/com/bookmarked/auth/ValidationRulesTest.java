@@ -23,6 +23,18 @@ class ValidationRulesTest {
     }
 
     @ParameterizedTest
+    @ValueSource(strings = {"Hemant Mhalsekar", "Anne-Marie", "D'Souza", "R. K. Narayan", "Zoë"})
+    void accepts_real_names(String name) {
+        assertThat(name).matches(AuthDtos.NAME_REGEX);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"Reader 101", "A", "<script>", "user@example"})
+    void rejects_names_with_digits_symbols_or_too_short(String name) {
+        assertThat(name).doesNotMatch(AuthDtos.NAME_REGEX);
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = {"9876543210", "6000000000", "7123456789", "8999999999"})
     void accepts_indian_mobile_numbers(String phone) {
         assertThat(phone).matches(AuthDtos.PHONE_REGEX);
