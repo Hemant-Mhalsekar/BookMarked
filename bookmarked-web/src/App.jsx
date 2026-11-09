@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { Outlet, Route, Routes } from 'react-router-dom'
 import Navbar from './components/Navbar'
@@ -24,6 +24,7 @@ import AdminReturnsPage from './features/admin/orders/AdminReturnsPage'
 import BookDetailsPage from './features/catalog/BookDetailsPage'
 import BooksPage from './features/catalog/BooksPage'
 import BookmarksPage from './features/bookmarks/BookmarksPage'
+import LibraryPage from './features/library/LibraryPage'
 import NotificationsPage from './features/notifications/NotificationsPage'
 import CheckoutPage from './features/checkout/CheckoutPage'
 import OrderDetailPage from './features/orders/OrderDetailPage'
@@ -33,6 +34,11 @@ import StackPage from './features/stack/StackPage'
 import AdminHomePage from './pages/AdminHomePage'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
+import { FullPageSpinner } from './components/ui'
+
+// The PDF engine is large, so the reader pages load only when opened
+const ReaderPage = lazy(() => import('./features/library/ReaderPage'))
+const SampleReaderPage = lazy(() => import('./features/library/SampleReaderPage'))
 
 /** On first load, trade the httpOnly refresh cookie (if any) for an access token. */
 function useSessionBootstrap() {
@@ -64,6 +70,7 @@ export default function App() {
         <Route path="books" element={<BooksPage />} />
         <Route path="book/:slug" element={<BookDetailsPage />} />
         <Route path="stack" element={<StackPage />} />
+        <Route path="read-sample/:variantId" element={<Suspense fallback={<FullPageSpinner />}><SampleReaderPage /></Suspense>} />
         <Route path="verify-email" element={<VerifyEmailPage />} />
 
         <Route element={<GuestOnlyRoute />}>
@@ -81,6 +88,8 @@ export default function App() {
 
         <Route element={<ProtectedRoute customerOnly />}>
           <Route path="bookmarks" element={<BookmarksPage />} />
+          <Route path="library" element={<LibraryPage />} />
+          <Route path="library/read/:variantId" element={<Suspense fallback={<FullPageSpinner />}><ReaderPage /></Suspense>} />
           <Route path="checkout" element={<CheckoutPage />} />
           <Route path="order-success/:orderNumber" element={<OrderDetailPage success />} />
           <Route path="orders" element={<OrdersPage />} />

@@ -109,6 +109,9 @@ export default function Navbar() {
                       <Link role="menuitem" to="/bookmarks" className="block px-4 py-2 hover:bg-slate-50 sm:hidden" onClick={() => setOpen(false)}>
                         {BRAND.wishlist}
                       </Link>
+                      <Link role="menuitem" to="/library" className="block px-4 py-2 hover:bg-slate-50" onClick={() => setOpen(false)}>
+                        {BRAND.library}
+                      </Link>
                       <Link role="menuitem" to="/orders" className="block px-4 py-2 hover:bg-slate-50" onClick={() => setOpen(false)}>
                         My orders
                       </Link>

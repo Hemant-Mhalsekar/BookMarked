@@ -10,6 +10,8 @@ RUN mvn -B -q package -DskipTests
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 RUN addgroup -S bookmarked && adduser -S bookmarked -G bookmarked
+# Private e-book storage (mounted as a volume in docker-compose)
+RUN mkdir -p /app/data/files && chown -R bookmarked:bookmarked /app/data
 COPY --from=build /app/target/bookmarked-api-*.jar app.jar
 USER bookmarked
 EXPOSE 8080

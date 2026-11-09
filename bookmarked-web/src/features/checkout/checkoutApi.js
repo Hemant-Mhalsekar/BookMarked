@@ -37,7 +37,7 @@ export const checkoutApi = api.injectEndpoints({
     }),
     verifyPayment: build.mutation({
       query: (body) => ({ url: '/checkout/verify', method: 'POST', body }),
-      invalidatesTags: ['Stack', 'Order'],
+      invalidatesTags: ['Stack', 'Order', 'Library'],
     }),
     retryPayment: build.mutation({
       query: (orderNumber) => ({ url: `/checkout/${encodeURIComponent(orderNumber)}/retry`, method: 'POST' }),

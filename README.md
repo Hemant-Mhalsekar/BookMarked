@@ -249,6 +249,23 @@ pack / ship / deliver / cancel actions, Refunds with retry, and live counts on t
   notified (in-app and email) at each step
 - Return photos need an image host (Cloudinary) and will be added when one is set up
 
+## What Step 6 includes: e-books
+
+- **Uploads (staff, `PUT /api/admin/variants/{id}/ebook`)**: PDF only, up to 100 MB. The file type is checked from its
+  first bytes and the whole PDF is opened (broken, empty or password-protected files are refused). A sample of the
+  first pages (about a tenth, at most 10) is cut automatically; staff can replace it with their own. The page count is
+  saved on the format
+- **Storage**: a private folder (`STORAGE_DIR`, a Docker volume in compose) behind a small `FileStorage` interface with
+  strict keys, so it can move to an R2/S3 bucket at deployment without other changes
+- **My Library** (`/api/library`): owned e-books, most recently read first, with progress ("Page 45 of 320 · 14%")
+- **Reading**: the browser asks for a signed link valid for 5 minutes (HMAC, like an S3 pre-signed URL), and the
+  reader (react-pdf, loaded only on that page) opens it directly. Ownership is checked again when the file is served.
+  Page navigation, zoom, dark mode, full screen and arrow keys; the position is saved and syncs across devices
+- **Downloads**: 5 per book, counted with an atomic UPDATE and logged with the IP. Links are single use, and every
+  page of the downloaded copy carries the buyer's name and email (footer and a faint diagonal mark, plus the PDF's
+  properties)
+- **Samples**: public at `/api/books/variants/{id}/sample`; "Read a free sample" on the book page; owners see "Read now"
+
 ## Configuration
 
 All settings come from environment variables; see [`.env.example`](.env.example).

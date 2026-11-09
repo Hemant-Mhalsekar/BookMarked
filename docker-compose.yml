@@ -52,6 +52,9 @@ services:
       RAZORPAY_KEY_ID: ${RAZORPAY_KEY_ID:-}
       RAZORPAY_KEY_SECRET: ${RAZORPAY_KEY_SECRET:-}
       RAZORPAY_WEBHOOK_SECRET: ${RAZORPAY_WEBHOOK_SECRET:-}
+      STORAGE_DIR: /app/data/files
+    volumes:
+      - ebook-files:/app/data    # uploaded e-book PDFs survive rebuilds
     ports:
       - "8080:8080"
 
@@ -64,3 +67,4 @@ services:
 
 volumes:
   mysql-data:
+  ebook-files:

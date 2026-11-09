@@ -88,6 +88,19 @@ public class GlobalExceptionHandler {
                 .body(ApiError.of(404, "NOT_FOUND", "Not found.", req.getRequestURI()));
     }
 
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiError> handleTooLarge(Exception ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(ApiError.of(413, "FILE_TOO_LARGE", "That file is too big. PDFs can be up to 100 MB.", req.getRequestURI()));
+    }
+
+    @ExceptionHandler({org.springframework.web.multipart.support.MissingServletRequestPartException.class,
+            org.springframework.web.multipart.MultipartException.class})
+    public ResponseEntity<ApiError> handleMultipart(Exception ex, HttpServletRequest req) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiError.of(400, "FILE_REQUIRED", "Choose a PDF to upload.", req.getRequestURI()));
+    }
+
     /** A lock wait timed out or MySQL picked this request as a deadlock victim: safe to retry. */
     @ExceptionHandler(PessimisticLockingFailureException.class)
     public ResponseEntity<ApiError> handleLockFailure(PessimisticLockingFailureException ex, HttpServletRequest req) {

@@ -21,3 +21,7 @@ npm-debug.log*
 .vscode/
 .DS_Store
 Thumbs.db
+
+# Local e-book storage
+bookmarked-api/data/
+data/
