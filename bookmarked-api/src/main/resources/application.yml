@@ -26,6 +26,11 @@ spring:
     cache-names: categories
     caffeine:
       spec: maximumSize=200,expireAfterWrite=10m
+  servlet:
+    multipart:
+      # E-book PDFs up to 100 MB (the upload service checks the size again)
+      max-file-size: 100MB
+      max-request-size: 101MB
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -96,6 +101,11 @@ app:
     super-admin-name: ${SUPER_ADMIN_NAME:Super Admin}
     # Inserts ~16 sample books on an empty database (enabled in the dev profile)
     demo-catalog: ${SEED_DEMO_CATALOG:false}
+  storage:
+    # Private folder for e-book PDFs (never served directly). Moves to an R2/S3 bucket at deployment.
+    local-dir: ${STORAGE_DIR:./data/files}
+    # How long a read or download link stays valid
+    link-ttl: PT5M
   razorpay:
     key-id: ${RAZORPAY_KEY_ID:}
     key-secret: ${RAZORPAY_KEY_SECRET:}

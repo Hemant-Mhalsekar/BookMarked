@@ -9,6 +9,7 @@ import { Alert, FullPageSpinner, Spinner } from '../../components/ui'
 import NotFoundPage from '../../pages/NotFoundPage'
 import { parseApiError } from '../../utils/errors'
 import { FORMAT_LABELS, formatPrice } from '../../utils/format'
+import { useLibraryIdsQuery } from '../library/libraryApi'
 import { useStack } from '../stack/useStack'
 import { useBookQuery, useRelatedBooksQuery } from './catalogApi'
 import { useRecentBooks, useTrackView } from './recentlyViewed'
@@ -123,6 +124,9 @@ function BuyBox({ book }) {
   const soldOut = variant.stockStatus === 'OUT_OF_STOCK'
   const maxQty = variant.format === 'EBOOK' ? 1 : Math.min(10, variant.stockLeft ?? 10)
   const inStackQty = stack.view?.lines.find((l) => l.variantId === variant.id)?.quantity ?? 0
+  const { data: ownedIds } = useLibraryIdsQuery(undefined, { skip: !stack.isCustomer })
+  const owned = variant.format === 'EBOOK' && Boolean(ownedIds?.includes(variant.id))
+  const sampleLink = `/read-sample/${variant.id}?book=${encodeURIComponent(book.slug)}&title=${encodeURIComponent(book.title)}`
 
   const add = async () => {
     setBusy(true)
@@ -178,7 +182,12 @@ function BuyBox({ book }) {
         </div>
         <p className={`mt-2 text-sm font-medium ${stock.tone}`}>{stock.text}</p>
 
-        {stack.isStaff ? (
+        {owned ? (
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Link to={`/library/read/${variant.id}`} className="btn-primary">Read now</Link>
+            <span className="text-sm text-emerald-700">In {BRAND.library}</span>
+          </div>
+        ) : stack.isStaff ? (
           <p className="mt-4 text-sm text-slate-500">You&apos;re signed in as staff, so shopping is turned off.</p>
         ) : (
           <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -201,6 +210,12 @@ function BuyBox({ book }) {
             </button>
             <BookmarkButton bookId={book.id} title={book.title} variant="button" />
           </div>
+        )}
+        {variant.format === 'EBOOK' && variant.sampleAvailable && !owned && (
+          <p className="mt-3 text-sm">
+            <Link to={sampleLink} className="link">Read a free sample</Link>
+            {variant.pages ? <span className="text-slate-500"> · {variant.pages} pages</span> : null}
+          </p>
         )}
         {inStackQty > 0 && variant.format !== 'EBOOK' && (
           <p className="mt-3 text-xs text-slate-500">{inStackQty} already in <Link to="/stack" className="link">{BRAND.cart}</Link>.</p>

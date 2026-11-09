@@ -10,6 +10,7 @@ import {
   useCreateBookMutation,
   useUpdateBookMutation,
 } from './adminCatalogApi'
+import EbookFilesPanel from './EbookFilesPanel'
 import { emptyBookForm, formatLabel, FORMATS, fromAdminBook, toBookRequest, validateBookForm } from './bookForm'
 
 export default function AdminBookFormPage() {
@@ -33,6 +34,7 @@ function BookForm({ existing }) {
   const saving = createState.isLoading || updateState.isLoading
   const apiError = parseApiError(createState.error ?? updateState.error)
 
+  const ebookVariant = existing?.variants.find((v) => v.format === 'EBOOK' && v.id)
   const errors = touched ? validateBookForm(form) : {}
   const set = (patch) => {
     setSaved(false)
@@ -126,6 +128,11 @@ function BookForm({ existing }) {
                           existed={existing?.variants.some((v) => v.format === f)} />
             ))}
           </section>
+          {ebookVariant ? (
+            <EbookFilesPanel variantId={ebookVariant.id} canWrite />
+          ) : form.variants.EBOOK?.enabled ? (
+            <p className="text-sm text-slate-500">Save the book first, then upload the e-book PDF here.</p>
+          ) : null}
         </div>
 
         <div className="space-y-6">

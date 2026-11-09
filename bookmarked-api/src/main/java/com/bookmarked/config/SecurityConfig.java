@@ -54,6 +54,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/books", "/api/books/**", "/api/categories").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/cart/preview").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/webhooks/razorpay").permitAll()
+                        // signed, expiring links: the token in the path is the permission
+                        .requestMatchers(HttpMethod.GET, "/api/files/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health/**", "/actuator/info").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/error").permitAll()

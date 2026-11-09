@@ -240,7 +240,7 @@ public class InvoiceService {
     }
 
     /** Keeps only characters the built-in fonts can draw. */
-    static String clean(String s) {
+    public static String clean(String s) {
         if (s == null) {
             return "";
         }

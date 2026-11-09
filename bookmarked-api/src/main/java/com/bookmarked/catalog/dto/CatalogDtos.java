@@ -108,13 +108,15 @@ public final class CatalogDtos {
             BigDecimal sellingPrice,
             int discountPercent,
             StockStatus stockStatus,
-            Integer stockLeft) {
+            Integer stockLeft,
+            boolean sampleAvailable) {
 
         public static VariantView from(BookVariant v) {
             StockStatus status = v.stockStatus();
             return new VariantView(v.getId(), v.getFormat(), v.getIsbn(), v.getPages(), v.getMrp(),
                     v.getSellingPrice(), v.discountPercent(), status,
-                    status == StockStatus.LOW_STOCK ? v.getStock() : null);
+                    status == StockStatus.LOW_STOCK ? v.getStock() : null,
+                    v.getFormat() == BookFormat.EBOOK && v.hasSample());
         }
     }
 

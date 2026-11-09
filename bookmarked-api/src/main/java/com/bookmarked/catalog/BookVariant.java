@@ -54,6 +54,14 @@ public class BookVariant {
     @Column(nullable = false)
     private boolean active = true;
 
+    /** 1 when an e-book sample PDF has been uploaded (read-only, computed by the database). */
+    @org.hibernate.annotations.Formula("(select count(*) from ebook_files f where f.variant_id = id and f.sample_storage_key is not null)")
+    private int sampleCount;
+
+    public boolean hasSample() {
+        return sampleCount > 0;
+    }
+
     protected BookVariant() {
     }
 

@@ -174,7 +174,9 @@ export default function OrderDetailPage({ success = false }) {
                   <Link to={`/book/${item.slug}`} className="font-medium hover:text-brand-700">{item.title}</Link>
                   <p className="text-slate-500">{FORMAT_LABELS[item.format]} · Qty {item.quantity} · {formatPrice(item.unitPrice)} each</p>
                   {placed && item.format === 'EBOOK' && item.fulfillmentStatus === 'DELIVERED' && (
-                    <p className="mt-1 text-xs font-medium text-emerald-700">Delivered · In {BRAND.library}</p>
+                    <p className="mt-1 text-xs font-medium text-emerald-700">
+                      Delivered · <Link to={`/library/read/${item.variantId}`} className="underline">Read now</Link>
+                    </p>
                   )}
                 </div>
                 <div className="text-sm font-semibold">{formatPrice(item.lineTotal)}</div>
