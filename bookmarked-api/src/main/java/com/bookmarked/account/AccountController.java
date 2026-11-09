@@ -43,7 +43,6 @@ public class AccountController {
         this.rateLimit = rateLimit;
     }
 
-    @Operation(summary = "Current user's profile, role and permissions")
     @Operation(summary = "Dashboard overview: stats, continue reading, recent orders, things to do")
     @GetMapping("/overview")
     public AccountOverviewService.Overview overview(@AuthenticationPrincipal AuthUser caller) {
@@ -66,6 +65,7 @@ public class AccountController {
         return accountService.changePhone(caller, req.phone(), req.password());
     }
 
+    @Operation(summary = "Current user's profile, role and permissions")
     @GetMapping("/me")
     public UserDto me(@AuthenticationPrincipal AuthUser caller) {
         return accountService.me(caller);
