@@ -17,6 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -78,6 +79,20 @@ public class MailService {
         send(to, "BookMarked account temporarily locked", "email/account-locked",
                 Map.of("name", to.name(), "minutes", minutes,
                         "resetLink", props.frontendUrl() + "/forgot-password"));
+    }
+
+    /** One line of the order email, e.g. ("Clean Code", "Paperback × 2", "₹1,398"). */
+    public record OrderLine(String title, String detail, String amount) {
+    }
+
+    @Async
+    public void sendOrderConfirmation(Recipient to, String orderNumber, List<OrderLine> lines, String total,
+                                      boolean cashOnDelivery, boolean hasEbooks, boolean hasPhysical) {
+        send(to, "Order " + orderNumber + " confirmed", "email/order-confirmed",
+                Map.of("name", to.name(), "orderNumber", orderNumber, "lines", lines, "total", total,
+                        "cod", cashOnDelivery, "hasEbooks", hasEbooks, "hasPhysical", hasPhysical,
+                        "orderLink", props.frontendUrl() + "/orders/" + orderNumber,
+                        "libraryLink", props.frontendUrl() + "/library"));
     }
 
     private void send(Recipient to, String subject, String template, Map<String, Object> vars) {

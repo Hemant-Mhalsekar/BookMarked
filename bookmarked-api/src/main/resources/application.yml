@@ -1,6 +1,10 @@
 spring:
   application:
     name: bookmarked-api
+  config:
+    # Local secrets: the .env file in the repo root (when run from bookmarked-api/) or the current folder.
+    # Both are optional and git-ignored; real environment variables still win.
+    import: "optional:file:../.env[.properties],optional:file:.env[.properties]"
   profiles:
     default: dev
   datasource:
@@ -92,12 +96,18 @@ app:
     super-admin-name: ${SUPER_ADMIN_NAME:Super Admin}
     # Inserts ~16 sample books on an empty database (enabled in the dev profile)
     demo-catalog: ${SEED_DEMO_CATALOG:false}
+  razorpay:
+    key-id: ${RAZORPAY_KEY_ID:}
+    key-secret: ${RAZORPAY_KEY_SECRET:}
+    webhook-secret: ${RAZORPAY_WEBHOOK_SECRET:}
+    base-url: https://api.razorpay.com
   business:
     reservation-minutes: 15
     delivery-fee: 40
     free-delivery-threshold: 499
     cod-max-order-value: 5000
     cod-fee: 0
+    max-unpaid-cod-orders: 2
     return-window-days: 7
     ebook-download-limit: 5
     low-stock-threshold: 5

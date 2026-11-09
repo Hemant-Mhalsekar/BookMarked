@@ -1,4 +1,4 @@
-import { isStrongPassword, PHONE_REGEX, validatePasswordPair, validateSignup } from './validation'
+import { isStrongPassword, PHONE_REGEX, validateAddress, validatePasswordPair, validateSignup } from './validation'
 import { parseApiError } from './errors'
 
 describe('password rules (mirror the backend)', () => {
@@ -43,5 +43,16 @@ describe('parseApiError', () => {
   })
   it('explains rate limiting', () => {
     expect(parseApiError({ status: 429, data: {} }).code).toBe('RATE_LIMITED')
+  })
+})
+
+describe('validateAddress', () => {
+  const good = { fullName: 'Asha Rao', phone: '9876543210', line1: '12 Marine Drive', line2: '', city: 'Mumbai', state: 'Maharashtra', pincode: '400001' }
+  it('accepts a complete address', () => {
+    expect(validateAddress(good)).toEqual({})
+  })
+  it('flags each bad field', () => {
+    const errors = validateAddress({ ...good, fullName: 'A1', phone: '12345', line1: ' ', city: 'M', state: '', pincode: '4000' })
+    expect(Object.keys(errors).sort()).toEqual(['city', 'fullName', 'line1', 'phone', 'pincode', 'state'])
   })
 })

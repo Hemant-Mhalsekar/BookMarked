@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { BRAND } from '../../brand'
 import BookCover from '../../components/BookCover'
 import { Alert, FullPageSpinner, Spinner } from '../../components/ui'
@@ -18,6 +18,7 @@ export default function StackPage() {
   const stack = useStack()
   const [error, setError] = useState(null)
   const [busyLine, setBusyLine] = useState(null)
+  const navigate = useNavigate()
 
   if (stack.isStaff) {
     return (
@@ -112,8 +113,9 @@ export default function StackPage() {
               Log in to check out
             </Link>
           ) : (
-            <button type="button" className="btn-primary w-full" disabled>
-              Checkout (coming in the next update)
+            <button type="button" className="btn-primary w-full" disabled={view.checkoutBlocked}
+                    onClick={() => navigate('/checkout')}>
+              Proceed to checkout
             </button>
           )}
           {view.checkoutBlocked && view.lines.some((l) => l.issue) && (

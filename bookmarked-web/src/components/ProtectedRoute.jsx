@@ -28,7 +28,7 @@ export function GuestOnlyRoute() {
   if (status !== 'ready') return <FullPageSpinner />
   if (user) {
     const fallback = user.accountType === 'STAFF' ? '/admin' : '/'
-    return <Navigate to={location.state?.from?.pathname ?? fallback} replace />
+    return <Navigate to={location.state?.from ? `${location.state.from.pathname}${location.state.from.search ?? ''}` : fallback} replace />
   }
   return <Outlet />
 }
