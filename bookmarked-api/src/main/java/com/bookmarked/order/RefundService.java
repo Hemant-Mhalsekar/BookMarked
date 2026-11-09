@@ -116,6 +116,22 @@ public class RefundService {
         return new RefundView(id, order.getOrderNumber(), amount, status, reason, refundId, note, now, now);
     }
 
+    /**
+     * A refund paid outside Razorpay (COD returns: staff send it by UPI and record the
+     * reference). Recorded as PROCESSED straight away.
+     */
+    public void recordManual(PurchaseOrder order, BigDecimal amount, String reason, String note) {
+        BigDecimal alreadyOwed = owed(order.getId());
+        if (alreadyOwed.add(amount).compareTo(order.getTotal()) > 0) {
+            throw new IllegalStateException("Refunds for " + order.getOrderNumber() + " would exceed the order total");
+        }
+        Timestamp now = Timestamp.from(clock.instant());
+        jdbc.update("insert into refunds (order_id, razorpay_refund_id, amount, status, reason, note, created_at, updated_at) values (?, null, ?, 'PROCESSED', ?, ?, ?, ?)",
+                order.getId(), amount, reason, note, now, now);
+        order.setPaymentStatus(alreadyOwed.add(amount).compareTo(order.getTotal()) >= 0
+                ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED);
+    }
+
     /** Everything owed to the customer so far, whether or not Razorpay has paid it out yet. */
     public BigDecimal owed(Long orderId) {
         BigDecimal sum = jdbc.queryForObject("select coalesce(sum(amount), 0) from refunds where order_id = ?",

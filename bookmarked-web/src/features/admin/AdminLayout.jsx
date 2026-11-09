@@ -6,6 +6,7 @@ import { selectUser } from '../auth/authSlice'
 const SECTIONS = [
   { to: '/admin', label: 'Dashboard', end: true },
   { to: '/admin/orders', label: 'Orders', permission: 'ORDER_READ' },
+  { to: '/admin/returns', label: 'Returns', permission: 'RETURN_MANAGE' },
   { to: '/admin/refunds', label: 'Refunds', permission: 'REFUND_ISSUE' },
   { to: '/admin/books', label: 'Books', permission: 'BOOK_READ' },
   { to: '/admin/categories', label: 'Categories', permission: 'BOOK_READ' },

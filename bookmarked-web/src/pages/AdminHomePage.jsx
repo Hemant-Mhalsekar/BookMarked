@@ -1,7 +1,7 @@
 import { useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
 import Can from '../components/Can'
-import { useAdminOrdersQuery, useRefundsQuery } from '../features/admin/orders/adminOrdersApi'
+import { useAdminOrdersQuery, useRefundsQuery, useReturnsQuery } from '../features/admin/orders/adminOrdersApi'
 import { selectUser } from '../features/auth/authSlice'
 
 function Count({ to, label, count, tone = 'text-slate-900' }) {
@@ -27,6 +27,14 @@ function OrderCounts() {
   )
 }
 
+function ReturnsToReview() {
+  const { data } = useReturnsQuery({ status: 'REQUESTED', size: 1 })
+  return (
+    <Count to="/admin/returns?status=REQUESTED" label="Returns to review" count={data?.totalElements}
+           tone={data?.totalElements ? 'text-amber-700' : 'text-slate-900'} />
+  )
+}
+
 function FailedRefunds() {
   const { data } = useRefundsQuery({ status: 'FAILED', size: 1 })
   return (
@@ -47,6 +55,7 @@ export default function AdminHomePage() {
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Can permission="ORDER_READ"><OrderCounts /></Can>
+        <Can permission="RETURN_MANAGE"><ReturnsToReview /></Can>
         <Can permission="REFUND_ISSUE"><FailedRefunds /></Can>
       </div>
       <div className="card">
@@ -60,7 +69,7 @@ export default function AdminHomePage() {
           <p className="mt-4 text-sm text-slate-600">You can invite staff (coming in Step 10).</p>
         </Can>
       </div>
-      <p className="text-sm text-slate-500">Returns, inventory and the rest of the admin panel arrive in later steps.</p>
+      <p className="text-sm text-slate-500">Inventory, reviews and the rest of the admin panel arrive in later steps.</p>
     </div>
   )
 }

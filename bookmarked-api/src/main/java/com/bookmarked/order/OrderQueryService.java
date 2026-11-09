@@ -30,13 +30,15 @@ public class OrderQueryService {
     private final PurchaseOrderRepository orders;
     private final OrderTimelines timelines;
     private final RefundService refunds;
+    private final ReturnService returns;
     private final Clock clock;
 
     public OrderQueryService(PurchaseOrderRepository orders, OrderTimelines timelines, RefundService refunds,
-                             Clock clock) {
+                             ReturnService returns, Clock clock) {
         this.orders = orders;
         this.timelines = timelines;
         this.refunds = refunds;
+        this.returns = returns;
         this.clock = clock;
     }
 
@@ -67,7 +69,8 @@ public class OrderQueryService {
     public record OrderLine(Long id, Long variantId, String title, String slug, String coverImageUrl,
                             BookFormat format, BigDecimal mrp, BigDecimal unitPrice, int quantity,
                             BigDecimal lineTotal, FulfillmentStatus fulfillmentStatus, boolean cancellable,
-                            OrderTimelines.ShipmentView shipment, List<OrderTimelines.TimelineEntry> timeline) {
+                            OrderTimelines.ShipmentView shipment, List<OrderTimelines.TimelineEntry> timeline,
+                            boolean returnable, Instant returnBy, ReturnService.CustomerReturn returnRequest) {
     }
 
     public record RefundLine(BigDecimal amount, String status, String reason, Instant createdAt) {
@@ -116,6 +119,8 @@ public class OrderQueryService {
         Map<Long, List<OrderTimelines.TimelineEntry>> history =
                 timelines.forItems(o.getItems().stream().map(OrderItem::getId).toList());
         Map<Long, OrderTimelines.ShipmentView> shipments = timelines.shipments(o.getId());
+        Map<Long, ReturnService.CustomerReturn> returnRequests =
+                returns.forItems(o.getItems().stream().map(OrderItem::getId).toList());
         boolean open = o.getStatus() == OrderStatus.CONFIRMED;
         ShippingAddress shipping = o.hasShipping()
                 ? new ShippingAddress(o.getShipName(), o.getShipPhone(), o.getShipLine1(), o.getShipLine2(),
@@ -127,7 +132,9 @@ public class OrderQueryService {
                     book.getCoverImageUrl(), i.getFormat(), i.getMrp(), i.getUnitPrice(), i.getQuantity(),
                     i.lineTotal(), i.getFulfillmentStatus(), open && i.isCancellable(),
                     i.getShipmentId() == null ? null : shipments.get(i.getShipmentId()),
-                    history.getOrDefault(i.getId(), List.of()));
+                    history.getOrDefault(i.getId(), List.of()),
+                    returns.returnable(i, returnRequests.containsKey(i.getId())),
+                    returns.returnBy(i), returnRequests.get(i.getId()));
         }).toList();
         List<RefundLine> refundLines = refunds.forOrder(o.getId()).stream()
                 .map(r -> new RefundLine(r.amount(), "RETRYING".equals(r.status()) ? "PENDING" : r.status(),

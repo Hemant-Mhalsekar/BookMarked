@@ -236,6 +236,19 @@ low-stock and failed-refund alerts.
 cancel with a refund preview, refunds and invoice download on the order page; admin Orders, order detail with
 pack / ship / deliver / cancel actions, Refunds with retry, and live counts on the admin dashboard.
 
+## What Step 5 includes (part 2): returns
+
+- Physical books can be returned within 7 days of delivery, refund only (`POST /api/orders/{n}/items/{itemId}/return`)
+  with a reason (damaged, wrong item, printing defect, not as described, changed my mind) and an optional comment
+- Staff queue at **Admin → Returns** (`/api/admin/returns`): approve → picked up → received (restock, which puts the
+  book back in stock with a RETURN ledger entry, or write off) → refunded; or decline with a reason the customer sees
+- Refunds: online orders through Razorpay; Cash on Delivery orders to the UPI ID the customer gave, paid by staff
+  who record the UPI reference
+- Steps only go forward, repeats are harmless, and each step locks the order like cancellations do
+- The customer sees "Return this book" with the deadline, then the return's progress on the order page, and is
+  notified (in-app and email) at each step
+- Return photos need an image host (Cloudinary) and will be added when one is set up
+
 ## Configuration
 
 All settings come from environment variables; see [`.env.example`](.env.example).

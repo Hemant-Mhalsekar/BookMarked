@@ -10,12 +10,22 @@ import {
   useCancelOrderMutation,
   useLazyInvoiceQuery,
   useOrderQuery,
+  useRequestReturnMutation,
   useRetryPaymentMutation,
   useVerifyPaymentMutation,
 } from '../checkout/checkoutApi'
 import { ORDER_STATUS_TEXT, PAYMENT_STATUS_TEXT } from '../checkout/checkoutRules'
 import { payWithRazorpay } from '../checkout/razorpay'
-import { CANCEL_REASONS, REFUND_STATUS_TEXT, refundPreview, stepsFor } from './orderRules'
+import {
+  CANCEL_REASONS,
+  REFUND_STATUS_TEXT,
+  refundPreview,
+  RETURN_REASON_TEXT,
+  RETURN_REASONS,
+  RETURN_STATUS_TEXT,
+  stepsFor,
+  UPI_REGEX,
+} from './orderRules'
 
 export function StatusBadge({ status }) {
   const s = ORDER_STATUS_TEXT[status] ?? { label: status, tone: 'bg-slate-100 text-slate-600' }
@@ -170,6 +180,7 @@ export default function OrderDetailPage({ success = false }) {
                 <div className="text-sm font-semibold">{formatPrice(item.lineTotal)}</div>
               </div>
               {placed && item.format !== 'EBOOK' && <ItemTimeline item={item} />}
+              {(item.returnable || item.returnRequest) && <ReturnSection order={order} item={item} />}
             </li>
           ))}
         </ul>
@@ -226,11 +237,11 @@ function ItemTimeline({ item }) {
   const steps = stepsFor(item)
   return (
     <div className="mt-3 sm:pl-[68px]">
-      <ol className="flex flex-col items-start gap-1 text-xs sm:flex-row sm:items-center sm:gap-0" aria-label={`Progress of ${item.title}`}>
+      <ol className="flex flex-col items-start gap-1 text-xs sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-0 sm:gap-y-1" aria-label={`Progress of ${item.title}`}>
         {steps.map((s, i) => (
           <li key={s.status} className="flex items-center">
             {i > 0 && <span className={`hidden h-px w-3 sm:block ${s.done ? 'bg-brand-700' : 'bg-slate-300'}`} aria-hidden="true" />}
-            <span className={`flex items-center gap-1.5 rounded-full px-2 py-0.5 ${
+            <span className={`flex items-center gap-1.5 whitespace-nowrap rounded-full px-2 py-0.5 ${
               s.status === 'CANCELLED' ? 'bg-slate-100 text-slate-600'
                 : s.done ? 'bg-brand-50 font-medium text-brand-800' : 'text-slate-400'}`}>
               <span className={`h-1.5 w-1.5 rounded-full ${s.status === 'CANCELLED' ? 'bg-slate-500' : s.done ? 'bg-brand-700' : 'bg-slate-300'}`} aria-hidden="true" />
@@ -252,6 +263,102 @@ function ItemTimeline({ item }) {
         <p className="mt-2 text-xs text-slate-500">{steps.at(-1).note}</p>
       )}
     </div>
+  )
+}
+
+/** "Return" button and form for a delivered book, or the status of its return. */
+function ReturnSection({ order, item }) {
+  const [open, setOpen] = useState(false)
+  const [reason, setReason] = useState('')
+  const [comment, setComment] = useState('')
+  const [upi, setUpi] = useState('')
+  const [errors, setErrors] = useState({})
+  const [error, setError] = useState(null)
+  const [requestReturn, { isLoading }] = useRequestReturnMutation()
+  const cod = order.paymentMethod === 'COD'
+  const r = item.returnRequest
+
+  if (r) {
+    const declined = r.status === 'REJECTED'
+    return (
+      <div className={`mt-3 rounded-lg px-3 py-2 text-xs sm:ml-[68px] ${declined ? 'bg-slate-100 text-slate-700' : 'bg-amber-50 text-amber-900'}`}>
+        <p className="font-medium">{RETURN_STATUS_TEXT[r.status] ?? r.status}</p>
+        <p>
+          {RETURN_REASON_TEXT[r.reason]} · refund {formatPrice(r.refundAmount)}
+          {r.status !== 'REFUNDED' && !declined && (cod ? ' by UPI' : ' to your original payment method')}
+        </p>
+        {r.adminNote && <p className="mt-1">Note from BookMarked: {r.adminNote}</p>}
+      </div>
+    )
+  }
+
+  if (!open) {
+    return (
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs sm:ml-[68px]">
+        <button type="button" className="btn-secondary py-1 text-xs" onClick={() => setOpen(true)}>Return this book</button>
+        <span className="text-slate-500">Returnable until {formatDateTime(item.returnBy)}</span>
+      </div>
+    )
+  }
+
+  const submit = async (e) => {
+    e.preventDefault()
+    setError(null)
+    const found = {}
+    if (!reason) found.reason = 'Choose a reason'
+    if (cod && !UPI_REGEX.test(upi.trim())) found.refundUpiId = 'Enter a UPI ID like name@okbank'
+    if (comment.length > 1000) found.comment = 'Keep it under 1000 characters'
+    setErrors(found)
+    if (Object.keys(found).length) return
+    try {
+      await requestReturn({
+        orderNumber: order.orderNumber, itemId: item.id, reason,
+        comment: comment.trim() || null, refundUpiId: cod ? upi.trim() : null,
+      }).unwrap()
+    } catch (err) {
+      const parsed = parseApiError(err)
+      setErrors(parsed.fieldErrors)
+      setError(parsed.message)
+    }
+  }
+
+  return (
+    <form onSubmit={submit} noValidate className="mt-3 space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm sm:ml-[68px]">
+      <p className="font-medium">Return {item.title}</p>
+      <label className="block">
+        <span className="text-slate-700">Why are you returning it?</span>
+        <select className={`input mt-1 ${errors.reason ? 'input-error' : ''}`} value={reason} onChange={(e) => setReason(e.target.value)}>
+          <option value="">Choose a reason</option>
+          {RETURN_REASONS.map((x) => <option key={x.value} value={x.value}>{x.label}</option>)}
+        </select>
+        {errors.reason && <span className="text-xs text-red-600">{errors.reason}</span>}
+      </label>
+      <label className="block">
+        <span className="text-slate-700">Anything we should know? (optional)</span>
+        <textarea className="input mt-1" rows={2} maxLength={1000} value={comment} onChange={(e) => setComment(e.target.value)} />
+      </label>
+      {cod && (
+        <label className="block">
+          <span className="text-slate-700">UPI ID for your refund</span>
+          <input className={`input mt-1 ${errors.refundUpiId ? 'input-error' : ''}`} placeholder="name@okbank" value={upi}
+                 onChange={(e) => setUpi(e.target.value)} autoComplete="off" />
+          <span className={`text-xs ${errors.refundUpiId ? 'text-red-600' : 'text-slate-500'}`}>
+            {errors.refundUpiId ?? 'You paid cash, so we’ll send the refund to this UPI ID.'}
+          </span>
+        </label>
+      )}
+      <p className="text-xs text-slate-500">
+        Refund: {formatPrice(item.lineTotal)} once the book reaches us. Returns are refund only; delivery charges aren&apos;t refunded.
+      </p>
+      {error && <Alert type="error">{error}</Alert>}
+      <div className="flex gap-2">
+        <button type="submit" className="btn-primary py-1.5 text-sm" disabled={isLoading}>
+          {isLoading && <Spinner className="h-4 w-4" />}
+          Request return
+        </button>
+        <button type="button" className="btn-secondary py-1.5 text-sm" onClick={() => setOpen(false)}>Not now</button>
+      </div>
+    </form>
   )
 }
 

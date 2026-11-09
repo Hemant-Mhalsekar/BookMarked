@@ -57,6 +57,22 @@ export const checkoutApi = api.injectEndpoints({
       }),
       invalidatesTags: ['Order', 'Notification'],
     }),
+    requestReturn: build.mutation({
+      query: ({ orderNumber, itemId, ...body }) => ({
+        url: `/orders/${encodeURIComponent(orderNumber)}/items/${itemId}/return`,
+        method: 'POST',
+        body,
+      }),
+      async onQueryStarted({ orderNumber }, { dispatch, queryFulfilled }) {
+        try {
+          const { data } = await queryFulfilled
+          dispatch(checkoutApi.util.upsertQueryData('order', orderNumber, data))
+        } catch {
+          // the form shows the error
+        }
+      },
+      invalidatesTags: ['Notification'],
+    }),
     // Returns a temporary object URL for the PDF (a string, so it can live in the cache)
     invoice: build.query({
       query: (orderNumber) => ({
@@ -84,5 +100,6 @@ export const {
   useOrdersQuery,
   useOrderQuery,
   useCancelOrderMutation,
+  useRequestReturnMutation,
   useLazyInvoiceQuery,
 } = checkoutApi
