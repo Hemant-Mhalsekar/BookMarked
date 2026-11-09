@@ -34,7 +34,7 @@ public record AppProperties(
     }
 
     public record Business(int reservationMinutes, BigDecimal deliveryFee, BigDecimal freeDeliveryThreshold,
-                           BigDecimal codMaxOrderValue, BigDecimal codFee, int returnWindowDays,
-                           int ebookDownloadLimit, int lowStockThreshold) {
+                           BigDecimal codMaxOrderValue, BigDecimal codFee, int maxUnpaidCodOrders,
+                           int returnWindowDays, int ebookDownloadLimit, int lowStockThreshold) {
     }
 }

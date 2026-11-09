@@ -41,11 +41,11 @@ export default function Navbar() {
         <SearchBox className="hidden max-w-md flex-1 md:block" />
 
         <div className="flex items-center gap-1">
-          <NavLink to="/books" className={navLink}>
+          <NavLink to="/books" className={(a) => `${navLink(a)} hidden sm:inline-block`}>
             Browse
           </NavLink>
           {user && user.accountType !== 'STAFF' && (
-            <NavLink to="/bookmarks" className={navLink}>
+            <NavLink to="/bookmarks" className={(a) => `${navLink(a)} hidden sm:inline-block`}>
               {BRAND.wishlist}
             </NavLink>
           )}
@@ -75,7 +75,7 @@ export default function Navbar() {
               <button
                 type="button"
                 onClick={() => setOpen((o) => !o)}
-                className="flex items-center gap-2 rounded-full bg-white/10 py-1 pl-1 pr-3 text-sm font-medium text-white hover:bg-white/20"
+                className="flex items-center gap-2 rounded-full bg-white/10 py-1 pl-1 pr-1 text-sm sm:pr-3 font-medium text-white hover:bg-white/20"
                 aria-haspopup="menu"
                 aria-expanded={open}
               >
@@ -97,6 +97,22 @@ export default function Navbar() {
                   <Link role="menuitem" to="/account" className="block px-4 py-2 hover:bg-slate-50" onClick={() => setOpen(false)}>
                     My account
                   </Link>
+                  {user.accountType !== 'STAFF' && (
+                    <>
+                      <Link role="menuitem" to="/books" className="block px-4 py-2 hover:bg-slate-50 sm:hidden" onClick={() => setOpen(false)}>
+                        Browse
+                      </Link>
+                      <Link role="menuitem" to="/bookmarks" className="block px-4 py-2 hover:bg-slate-50 sm:hidden" onClick={() => setOpen(false)}>
+                        {BRAND.wishlist}
+                      </Link>
+                      <Link role="menuitem" to="/orders" className="block px-4 py-2 hover:bg-slate-50" onClick={() => setOpen(false)}>
+                        My orders
+                      </Link>
+                      <Link role="menuitem" to="/account/addresses" className="block px-4 py-2 hover:bg-slate-50" onClick={() => setOpen(false)}>
+                        Saved addresses
+                      </Link>
+                    </>
+                  )}
                   <Link
                     role="menuitem"
                     to="/account/security"

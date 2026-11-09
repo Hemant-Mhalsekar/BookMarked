@@ -53,6 +53,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/books", "/api/books/**", "/api/categories").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/cart/preview").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/webhooks/razorpay").permitAll()
                         .requestMatchers(HttpMethod.GET, "/actuator/health/**", "/actuator/info").permitAll()
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/error").permitAll()

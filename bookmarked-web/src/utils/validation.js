@@ -30,3 +30,19 @@ export function validatePasswordPair(password, confirmPassword) {
   if (password !== confirmPassword) errors.confirmPassword = 'Passwords do not match'
   return errors
 }
+
+export const PINCODE_REGEX = /^\d{6}$/
+
+/** Mirrors AddressService.AddressRequest. */
+export function validateAddress({ fullName, phone, line1, line2 = '', city, state, pincode }) {
+  const errors = {}
+  if (!NAME_REGEX.test(fullName.trim())) errors.fullName = "Enter the recipient's name"
+  if (!PHONE_REGEX.test(phone.trim())) errors.phone = 'Enter a valid 10-digit mobile number'
+  if (!line1.trim()) errors.line1 = 'Enter the address'
+  else if (line1.trim().length > 120) errors.line1 = 'Keep it under 120 characters'
+  if (line2.trim().length > 120) errors.line2 = 'Keep it under 120 characters'
+  if (city.trim().length < 2 || city.trim().length > 60) errors.city = 'Enter the city'
+  if (state.trim().length < 2 || state.trim().length > 60) errors.state = 'Enter the state'
+  if (!PINCODE_REGEX.test(pincode.trim())) errors.pincode = 'Enter a 6-digit pincode'
+  return errors
+}

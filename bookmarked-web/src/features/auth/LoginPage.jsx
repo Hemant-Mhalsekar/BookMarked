@@ -19,7 +19,7 @@ export default function LoginPage() {
     try {
       const data = await login({ identifier: form.identifier.trim(), password: form.password }).unwrap()
       const fallback = data.user.accountType === 'STAFF' ? '/admin' : '/'
-      navigate(location.state?.from?.pathname ?? fallback, { replace: true })
+      navigate(location.state?.from ? `${location.state.from.pathname}${location.state.from.search ?? ''}` : fallback, { replace: true })
     } catch {
       // shown below
     }

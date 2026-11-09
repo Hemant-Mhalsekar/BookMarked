@@ -173,6 +173,39 @@ and recently viewed (`/api/recently-viewed`, stored per user; guests keep it in 
 **Frontend**: Your Stack page, Bookmarks page with "Move to Your Stack", bookmark icons on every book,
 full book page (Add to Stack, Buy now, Bookmark, related rows), home rows for recently viewed, top rated and e-books
 
+## What Step 4 includes
+
+**Addresses**: `GET|POST /api/account/addresses`, `PUT|DELETE /api/account/addresses/{id}`,
+`PATCH /api/account/addresses/{id}/default` (up to 5 per customer, always one default)
+
+**Checkout** (`POST /api/checkout/create-order`, `POST /api/checkout/verify`, `POST /api/checkout/{orderNumber}/retry`)
+
+- From Your Stack or "Buy now" (one book, skips the Stack). Prices, stock and ownership are checked again on the server
+- Stock is taken with one atomic `UPDATE … WHERE stock >= qty`, so two buyers can never get the same last copy
+  (there's a test that races six buyers for one book)
+- An `Idempotency-Key` header makes a double-click or network retry return the same order instead of a second one
+- **Online (Razorpay test mode):** the server creates the Razorpay order and holds the stock for 15 minutes.
+  The browser only ever gets the key id; the payment is confirmed only after checking the HMAC-SHA256 signature
+  (`order_id|payment_id`, key secret) on the server, and the amount must match to the paisa
+- **Webhook** `POST /api/webhooks/razorpay` (`payment.captured`, `order.paid`, `payment.failed`, `refund.processed`):
+  signature checked over the raw body with the webhook secret; duplicate deliveries are ignored by event id; it confirms
+  orders even if the customer closed the tab. Verify and webhook can arrive in any order and confirm exactly once
+- Unpaid orders expire after 15 minutes (a job runs every minute) and the stock goes back. If money arrives after that,
+  the order is confirmed if stock is still there, otherwise refunded automatically
+- **Cash on Delivery:** physical books only, orders up to ₹5,000, verified email, at most 2 unpaid COD orders at a time
+- On confirmation: e-books go straight to My Library, physical items are "Order placed", bought items leave Your Stack,
+  every stock change is in the inventory ledger, and a confirmation email is sent
+
+**Orders**: `GET /api/orders`, `GET /api/orders/{orderNumber}` (only your own)
+
+**Frontend**: checkout page (address, payment method, review), Razorpay popup loaded only when paying,
+order confirmation page, My orders with "Complete payment" for unpaid orders, saved addresses page
+
+**Razorpay keys:** put `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET` (test mode) in the root `.env`, which git ignores.
+Without them, online payment answers "payments unavailable" and COD still works. Test cards and UPI ids are on
+[Razorpay's test page](https://razorpay.com/docs/payments/payments/test-card-details/). The webhook needs a public URL
+(for example an ngrok tunnel to port 8080) and `RAZORPAY_WEBHOOK_SECRET`; checkout works without it.
+
 ## Configuration
 
 All settings come from environment variables; see [`.env.example`](.env.example).

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body th:replace="~{email/layout :: page(~{::section})}">
+<section>
+    <p>Hi <span th:text="${name}">there</span>,</p>
+    <p>Thanks for your order! Order <strong th:text="${orderNumber}">BM-20261109-000001</strong> is confirmed.</p>
+    <table role="presentation" width="100%" cellpadding="6" style="font-size:14px;border-collapse:collapse;margin:16px 0;">
+        <tr th:each="line : ${lines}" style="border-bottom:1px solid #e4e4e7;">
+            <td>
+                <strong th:text="${line.title}">Clean Code</strong><br>
+                <span style="color:#71717a;" th:text="${line.detail}">Paperback × 1</span>
+            </td>
+            <td align="right" th:text="${line.amount}">₹699</td>
+        </tr>
+        <tr>
+            <td><strong>Total</strong></td>
+            <td align="right"><strong th:text="${total}">₹699</strong></td>
+        </tr>
+    </table>
+    <p th:if="${cod}">You chose <strong>Cash on Delivery</strong>. Please keep the exact amount ready.</p>
+    <p th:if="${hasEbooks}">Your e-books are ready to read in <a th:href="${libraryLink}">My Library</a>.</p>
+    <p th:if="${hasPhysical}">We'll email you again when your books ship.</p>
+    <p style="margin:28px 0;">
+        <a th:href="${orderLink}"
+           style="background:#1e3a8a;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:bold;">
+            View your order
+        </a>
+    </p>
+</section>
+</body>
+</html>

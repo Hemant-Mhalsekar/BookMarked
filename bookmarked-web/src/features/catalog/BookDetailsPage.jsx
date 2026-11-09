@@ -124,21 +124,24 @@ function BuyBox({ book }) {
   const maxQty = variant.format === 'EBOOK' ? 1 : Math.min(10, variant.stockLeft ?? 10)
   const inStackQty = stack.view?.lines.find((l) => l.variantId === variant.id)?.quantity ?? 0
 
-  const add = async (goToStack) => {
+  const add = async () => {
     setBusy(true)
     setMessage(null)
     try {
       const view = await stack.add(variant, quantity)
-      if (goToStack) {
-        navigate('/stack')
-        return
-      }
       setMessage({ type: 'success', text: view?.notice ?? `Added to ${BRAND.cart}.` })
     } catch (e) {
       setMessage({ type: 'error', text: parseApiError(e).message })
     } finally {
       setBusy(false)
     }
+  }
+
+  // Buy now skips Your Stack: straight to checkout with just this book
+  const buyNow = () => {
+    const target = `/checkout?buy=${variant.id}&qty=${variant.format === 'EBOOK' ? 1 : quantity}`
+    if (stack.isGuest) navigate('/login', { state: { from: { pathname: '/checkout', search: target.slice('/checkout'.length) } } })
+    else navigate(target)
   }
 
   return (
@@ -188,12 +191,12 @@ function BuyBox({ book }) {
               </label>
             )}
             <button type="button" className="btn-primary" disabled={soldOut || busy || (variant.format === 'EBOOK' && inStackQty > 0)}
-                    onClick={() => add(false)}>
+                    onClick={add}>
               {busy && <Spinner className="h-4 w-4" />}
               {variant.format === 'EBOOK' && inStackQty > 0 ? `In ${BRAND.cart}` : `Add to ${BRAND.cart}`}
             </button>
             <button type="button" className="btn border border-amber-400 bg-amber-400 text-slate-900 hover:bg-amber-300"
-                    disabled={soldOut || busy} onClick={() => add(true)}>
+                    disabled={soldOut || busy} onClick={buyNow}>
               Buy now
             </button>
             <BookmarkButton bookId={book.id} title={book.title} variant="button" />

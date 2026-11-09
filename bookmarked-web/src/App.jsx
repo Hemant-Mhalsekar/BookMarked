@@ -4,6 +4,7 @@ import { Outlet, Route, Routes } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import ProtectedRoute, { GuestOnlyRoute } from './components/ProtectedRoute'
 import AccountPage from './features/account/AccountPage'
+import AddressesPage from './features/account/AddressesPage'
 import SecurityPage from './features/account/SecurityPage'
 import { useRefreshMutation } from './features/auth/authApi'
 import { selectAuthStatus } from './features/auth/authSlice'
@@ -19,6 +20,9 @@ import AdminLayout from './features/admin/AdminLayout'
 import BookDetailsPage from './features/catalog/BookDetailsPage'
 import BooksPage from './features/catalog/BooksPage'
 import BookmarksPage from './features/bookmarks/BookmarksPage'
+import CheckoutPage from './features/checkout/CheckoutPage'
+import OrderDetailPage from './features/orders/OrderDetailPage'
+import OrdersPage from './features/orders/OrdersPage'
 import SessionSync from './features/stack/SessionSync'
 import StackPage from './features/stack/StackPage'
 import AdminHomePage from './pages/AdminHomePage'
@@ -71,6 +75,11 @@ export default function App() {
 
         <Route element={<ProtectedRoute customerOnly />}>
           <Route path="bookmarks" element={<BookmarksPage />} />
+          <Route path="checkout" element={<CheckoutPage />} />
+          <Route path="order-success/:orderNumber" element={<OrderDetailPage success />} />
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="orders/:orderNumber" element={<OrderDetailPage />} />
+          <Route path="account/addresses" element={<AddressesPage />} />
         </Route>
 
         <Route element={<ProtectedRoute staffOnly />}>
