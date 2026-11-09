@@ -10,8 +10,8 @@ A full-stack online bookstore for **paperback, hardcover and e-books**, built wi
 | **Your Stack** | Shopping cart |
 | **My Library** | Purchased e-books, readable in the browser |
 
-> Status: **Phase 1 · Step 1 done**: project setup and complete authentication.
-> Next: Step 2, books, variants, categories, search and admin book management.
+> Status: **Phase 1 · Steps 1–2 done**: setup, authentication, and the catalog (books, formats, search, admin).
+> Next: Step 3, Your Stack (cart), Bookmarks (wishlist) and the full book page.
 
 ## Tech stack
 
@@ -123,6 +123,34 @@ cd bookmarked-web && npm test       # Vitest
 - My account and Security pages (sessions, change password, sign-in history)
 - Access token kept in memory only; silent refresh on page load and automatic refresh + retry on 401
 - Route guards for logged-in users and staff, `<Can permission="...">` component
+
+## What Step 2 includes
+
+**Catalog API (public)**
+
+- `GET /api/books`: search + filters + sort + pagination in one endpoint
+  (`q`, `category` with subcategories, `author`, `format`, `minPrice`, `maxPrice`, `minRating`, `inStock`, `featured`,
+  `sort=relevance|price_asc|price_desc|newest|rating`)
+- Search matches title, author and exact ISBN, plus **MySQL FULLTEXT** on title + description (prefix matching, relevance order)
+- `GET /api/books/suggest` for search-as-you-type, `GET /api/books/{slug}`, `GET /api/categories` (cached tree)
+- Books have **Paperback / Hardcover / E-book variants**, each with its own ISBN, MRP, price and stock
+- Customers never see exact stock: `IN_STOCK`, `LOW_STOCK` (with "only N left"), `OUT_OF_STOCK` or `DIGITAL`
+
+**Admin API** (permission-checked)
+
+- Create / edit books with all formats in one form; formats removed from a book are deactivated, never deleted
+- Hide / show and feature books; categories and subcategories (deactivate only)
+- ISBN-10/13 checksum validation, unique ISBNs and slugs, price ≤ MRP
+- Every stock change is written to the **inventory ledger** (`inventory_movements`)
+
+**Frontend**
+
+- Browse page with filters, sort and pagination kept in the URL; navbar search with suggestions
+- Book page with format tabs, prices, discount and stock messages
+- Admin: books table, book form (formats, authors, categories, preview), categories manager
+
+In the `dev` profile, 16 sample books are added to an empty database (`app.seed.demo-catalog`). Their ISBNs are
+checksum-valid but fictional.
 
 ## Configuration
 

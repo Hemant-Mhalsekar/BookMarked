@@ -5,7 +5,7 @@ import { selectUser } from '../features/auth/authSlice'
 export default function AdminHomePage() {
   const user = useSelector(selectUser)
   return (
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-10">
+    <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Admin dashboard</h1>
         <p className="text-sm text-slate-600">
@@ -23,7 +23,7 @@ export default function AdminHomePage() {
           <p className="mt-4 text-sm text-slate-600">You can invite staff (coming in Step 10).</p>
         </Can>
       </div>
-      <p className="text-sm text-slate-500">Books, inventory, orders and the rest of the admin panel arrive in later steps.</p>
+      <p className="text-sm text-slate-500">Inventory, orders, returns and the rest of the admin panel arrive in later steps.</p>
     </div>
   )
 }

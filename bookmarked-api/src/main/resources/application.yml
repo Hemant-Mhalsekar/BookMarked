@@ -15,6 +15,13 @@ spring:
       hibernate:
         jdbc:
           time_zone: UTC
+        # Loads authors/categories/variants for a whole page of books in a few queries (no N+1)
+        default_batch_fetch_size: 50
+  cache:
+    type: caffeine
+    cache-names: categories
+    caffeine:
+      spec: maximumSize=200,expireAfterWrite=10m
   flyway:
     enabled: true
     locations: classpath:db/migration
@@ -83,6 +90,8 @@ app:
     super-admin-password: ${SUPER_ADMIN_PASSWORD:}
     super-admin-phone: ${SUPER_ADMIN_PHONE:}
     super-admin-name: ${SUPER_ADMIN_NAME:Super Admin}
+    # Inserts ~16 sample books on an empty database (enabled in the dev profile)
+    demo-catalog: ${SEED_DEMO_CATALOG:false}
   business:
     reservation-minutes: 15
     delivery-fee: 40
@@ -101,6 +110,8 @@ spring:
 app:
   cookie:
     secure: ${COOKIE_SECURE:false}
+  seed:
+    demo-catalog: ${SEED_DEMO_CATALOG:true}
 logging:
   level:
     com.bookmarked: DEBUG

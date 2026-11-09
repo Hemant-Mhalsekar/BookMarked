@@ -19,3 +19,15 @@ export function timeAgo(iso, now = Date.now()) {
   if (hours < 24) return `${hours} h ago`
   return formatDateTime(iso)
 }
+
+const rupees = new Intl.NumberFormat('en-IN', {
+  style: 'currency',
+  currency: 'INR',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+})
+
+/** 699 -> "₹699", 1099.5 -> "₹1,099.5" */
+export const formatPrice = (value) => (value == null || value === '' ? '—' : rupees.format(Number(value)))
+
+export const FORMAT_LABELS = { PAPERBACK: 'Paperback', HARDCOVER: 'Hardcover', EBOOK: 'E-book' }
