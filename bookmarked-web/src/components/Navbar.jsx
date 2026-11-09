@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { selectUser } from '../features/auth/authSlice'
 import { useLogoutMutation } from '../features/auth/authApi'
+import SearchBox from './SearchBox'
 
 const navLink = ({ isActive }) =>
   `rounded-md px-3 py-2 text-sm font-medium ${isActive ? 'bg-white/15 text-white' : 'text-brand-100 hover:text-white'}`
@@ -25,8 +26,8 @@ export default function Navbar() {
 
   return (
     <header className="sticky top-0 z-30 bg-brand-800 shadow">
-      <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-        <Link to="/" className="flex items-center gap-2 text-lg font-bold text-white">
+      <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4">
+        <Link to="/" className="flex shrink-0 items-center gap-2 text-lg font-bold text-white">
           <img src="/favicon.svg" alt="" className="h-7 w-7" />
           <span className="leading-tight">
             BookMarked
@@ -34,9 +35,11 @@ export default function Navbar() {
           </span>
         </Link>
 
+        <SearchBox className="hidden max-w-md flex-1 md:block" />
+
         <div className="flex items-center gap-1">
-          <NavLink to="/" end className={navLink}>
-            Home
+          <NavLink to="/books" className={navLink}>
+            Browse
           </NavLink>
           {user?.accountType === 'STAFF' && (
             <NavLink to="/admin" className={navLink}>

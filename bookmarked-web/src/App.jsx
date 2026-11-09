@@ -12,6 +12,12 @@ import LoginPage from './features/auth/LoginPage'
 import ResetPasswordPage from './features/auth/ResetPasswordPage'
 import SignupPage from './features/auth/SignupPage'
 import VerifyEmailPage from './features/auth/VerifyEmailPage'
+import AdminBookFormPage from './features/admin/AdminBookFormPage'
+import AdminBooksPage from './features/admin/AdminBooksPage'
+import AdminCategoriesPage from './features/admin/AdminCategoriesPage'
+import AdminLayout from './features/admin/AdminLayout'
+import BookDetailsPage from './features/catalog/BookDetailsPage'
+import BooksPage from './features/catalog/BooksPage'
 import AdminHomePage from './pages/AdminHomePage'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -42,6 +48,8 @@ export default function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<HomePage />} />
+        <Route path="books" element={<BooksPage />} />
+        <Route path="book/:slug" element={<BookDetailsPage />} />
         <Route path="verify-email" element={<VerifyEmailPage />} />
 
         <Route element={<GuestOnlyRoute />}>
@@ -57,7 +65,17 @@ export default function App() {
         </Route>
 
         <Route element={<ProtectedRoute staffOnly />}>
-          <Route path="admin" element={<AdminHomePage />} />
+          <Route path="admin" element={<AdminLayout />}>
+            <Route index element={<AdminHomePage />} />
+            <Route element={<ProtectedRoute staffOnly permission="BOOK_READ" />}>
+              <Route path="books" element={<AdminBooksPage />} />
+              <Route path="categories" element={<AdminCategoriesPage />} />
+            </Route>
+            <Route element={<ProtectedRoute staffOnly permission="BOOK_WRITE" />}>
+              <Route path="books/new" element={<AdminBookFormPage />} />
+              <Route path="books/:id/edit" element={<AdminBookFormPage />} />
+            </Route>
+          </Route>
         </Route>
 
         <Route path="*" element={<NotFoundPage />} />
