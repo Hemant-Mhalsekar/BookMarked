@@ -18,6 +18,9 @@ import AdminCategoriesPage from './features/admin/AdminCategoriesPage'
 import AdminLayout from './features/admin/AdminLayout'
 import BookDetailsPage from './features/catalog/BookDetailsPage'
 import BooksPage from './features/catalog/BooksPage'
+import BookmarksPage from './features/bookmarks/BookmarksPage'
+import SessionSync from './features/stack/SessionSync'
+import StackPage from './features/stack/StackPage'
 import AdminHomePage from './pages/AdminHomePage'
 import HomePage from './pages/HomePage'
 import NotFoundPage from './pages/NotFoundPage'
@@ -34,6 +37,7 @@ function useSessionBootstrap() {
 function Layout() {
   return (
     <div className="min-h-screen">
+      <SessionSync />
       <Navbar />
       <main>
         <Outlet />
@@ -50,6 +54,7 @@ export default function App() {
         <Route index element={<HomePage />} />
         <Route path="books" element={<BooksPage />} />
         <Route path="book/:slug" element={<BookDetailsPage />} />
+        <Route path="stack" element={<StackPage />} />
         <Route path="verify-email" element={<VerifyEmailPage />} />
 
         <Route element={<GuestOnlyRoute />}>
@@ -62,6 +67,10 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="account" element={<AccountPage />} />
           <Route path="account/security" element={<SecurityPage />} />
+        </Route>
+
+        <Route element={<ProtectedRoute customerOnly />}>
+          <Route path="bookmarks" element={<BookmarksPage />} />
         </Route>
 
         <Route element={<ProtectedRoute staffOnly />}>

@@ -3,6 +3,7 @@ package com.bookmarked.catalog;
 import com.bookmarked.catalog.dto.CatalogDtos.BookCard;
 import com.bookmarked.catalog.dto.CatalogDtos.BookDetail;
 import com.bookmarked.catalog.dto.CatalogDtos.CategoryNode;
+import com.bookmarked.catalog.dto.CatalogDtos.RelatedBooks;
 import com.bookmarked.common.ApiException;
 import com.bookmarked.common.PageResponse;
 import org.springframework.cache.annotation.Cacheable;
@@ -13,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -27,6 +29,8 @@ import java.util.Set;
 public class CatalogService {
 
     public static final String CATEGORY_CACHE = "categories";
+    static final int RELATED_LIMIT = 6;
+    public static final int MAX_BY_IDS = 24;
 
     private final BookRepository books;
     private final CategoryRepository categories;
@@ -59,6 +63,36 @@ public class CatalogService {
                 .filter(b -> !b.activeVariants().isEmpty())
                 .map(BookDetail::from)
                 .orElseThrow(() -> ApiException.notFound("BOOK_NOT_FOUND", "Book not found."));
+    }
+
+    public RelatedBooks related(String slug) {
+        Book book = books.findBySlugAndActiveTrue(slug)
+                .orElseThrow(() -> ApiException.notFound("BOOK_NOT_FOUND", "Book not found."));
+        List<Long> authorIds = book.getAuthors().stream().map(Author::getId).toList();
+        List<Book> byAuthor = authorIds.isEmpty() ? List.of()
+                : books.findByAuthorsExcluding(authorIds, book.getId(), PageRequest.of(0, RELATED_LIMIT));
+
+        Set<Long> exclude = new HashSet<>();
+        exclude.add(book.getId());
+        byAuthor.forEach(b -> exclude.add(b.getId()));
+        List<Long> categoryIds = book.getCategories().stream().map(Category::getId).toList();
+        List<Book> similar = categoryIds.isEmpty() ? List.of()
+                : books.findInCategoriesExcluding(categoryIds, exclude, PageRequest.of(0, RELATED_LIMIT));
+
+        return new RelatedBooks(byAuthor.stream().map(BookCard::from).toList(),
+                similar.stream().map(BookCard::from).toList());
+    }
+
+    /** Cards for the given ids, in the given order, skipping hidden or unknown books. */
+    public List<BookCard> byIds(List<Long> ids) {
+        List<Long> wanted = ids.stream().distinct().limit(MAX_BY_IDS).toList();
+        Map<Long, Book> found = new HashMap<>();
+        books.findAllById(wanted).forEach(b -> found.put(b.getId(), b));
+        return wanted.stream()
+                .map(found::get)
+                .filter(b -> b != null && b.isActive() && b.getFromPrice() != null)
+                .map(BookCard::from)
+                .toList();
     }
 
     /** Active categories as a two-level tree, alphabetical. Cached; admin changes evict it. */

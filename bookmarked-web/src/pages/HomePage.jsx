@@ -1,15 +1,19 @@
 import { useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
 import { BRAND } from '../brand'
-import BookCard, { BookCardSkeleton } from '../components/BookCard'
+import BookRow from '../components/BookRow'
 import { selectUser } from '../features/auth/authSlice'
 import { useCategoriesQuery, useSearchBooksQuery } from '../features/catalog/catalogApi'
+import { useRecentBooks } from '../features/catalog/recentlyViewed'
 
 export default function HomePage() {
   const user = useSelector(selectUser)
   const { data: categories = [] } = useCategoriesQuery()
   const featured = useSearchBooksQuery({ featured: true, size: 6 })
   const newest = useSearchBooksQuery({ sort: 'newest', size: 6 })
+  const topRated = useSearchBooksQuery({ sort: 'rating', minRating: 4, size: 6 })
+  const ebooks = useSearchBooksQuery({ format: 'EBOOK', size: 6 })
+  const recent = useRecentBooks()
 
   return (
     <div>
@@ -45,27 +49,12 @@ export default function HomePage() {
           </section>
         )}
 
-        <BookRow title="Featured" query={featured} link="/books" />
-        <BookRow title="New arrivals" query={newest} link="/books?sort=newest" />
+        <BookRow title="Pick up where you left off" books={recent} />
+        <BookRow title="Featured" books={featured.data?.content} isLoading={featured.isLoading} link="/books" />
+        <BookRow title="New arrivals" books={newest.data?.content} isLoading={newest.isLoading} link="/books?sort=newest" />
+        <BookRow title="Top rated" books={topRated.data?.content} link="/books?sort=rating&minRating=4" />
+        <BookRow title="E-books corner" books={ebooks.data?.content} link="/books?format=EBOOK" />
       </div>
     </div>
-  )
-}
-
-function BookRow({ title, query, link }) {
-  const books = query.data?.content ?? []
-  if (query.isSuccess && books.length === 0) return null
-  return (
-    <section>
-      <div className="flex items-baseline justify-between">
-        <h2 className="text-xl font-semibold">{title}</h2>
-        <Link to={link} className="link text-sm">See all</Link>
-      </div>
-      <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-        {query.isLoading
-          ? Array.from({ length: 6 }, (_, i) => <BookCardSkeleton key={i} />)
-          : books.slice(0, 6).map((b) => <BookCard key={b.id} book={b} />)}
-      </div>
-    </section>
   )
 }

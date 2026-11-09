@@ -14,6 +14,10 @@ export const catalogApi = api.injectEndpoints({
       query: (slug) => `/books/${encodeURIComponent(slug)}`,
       providesTags: (_r, _e, slug) => [{ type: 'Book', id: slug }],
     }),
+    relatedBooks: build.query({
+      query: (slug) => `/books/${encodeURIComponent(slug)}/related`,
+      providesTags: ['Book'],
+    }),
     categories: build.query({
       query: () => '/categories',
       providesTags: ['Category'],
@@ -21,4 +25,4 @@ export const catalogApi = api.injectEndpoints({
   }),
 })
 
-export const { useSearchBooksQuery, useSuggestBooksQuery, useBookQuery, useCategoriesQuery } = catalogApi
+export const { useSearchBooksQuery, useSuggestBooksQuery, useBookQuery, useRelatedBooksQuery, useCategoriesQuery } = catalogApi

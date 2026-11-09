@@ -29,6 +29,10 @@ public final class CatalogDtos {
         }
     }
 
+    /** "More by this author" and "You may also like" on the book page. */
+    public record RelatedBooks(List<BookCard> moreByAuthor, List<BookCard> similar) {
+    }
+
     public record CategoryNode(Long id, String name, String slug, List<CategoryNode> children) {
     }
 

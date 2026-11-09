@@ -33,7 +33,11 @@ export default function BooksPage() {
   }, [filters.page])
 
   const categoryName = findCategoryName(categories, filters.category)
-  const heading = filters.q ? `Results for “${filters.q}”` : categoryName ?? 'All books'
+  const heading = filters.q
+    ? `Results for “${filters.q}”`
+    : filters.author
+      ? `Books by ${filters.author}`
+      : categoryName ?? 'All books'
   const count = activeFilterCount(filters)
 
   return (

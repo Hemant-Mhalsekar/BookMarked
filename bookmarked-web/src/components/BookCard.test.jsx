@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react'
+import { Provider } from 'react-redux'
 import { MemoryRouter } from 'react-router-dom'
+import { makeStore } from '../app/store'
 import BookCard from './BookCard'
 
 const book = {
@@ -18,7 +20,12 @@ const book = {
   stockLeft: 2,
 }
 
-const renderCard = (b) => render(<MemoryRouter><BookCard book={b} /></MemoryRouter>)
+const renderCard = (b) =>
+  render(
+    <Provider store={makeStore()}>
+      <MemoryRouter><BookCard book={b} /></MemoryRouter>
+    </Provider>,
+  )
 
 describe('BookCard', () => {
   it('shows price, discount, rating and badges, linking to the book', () => {
@@ -32,6 +39,7 @@ describe('BookCard', () => {
     expect(screen.getByText('Only 2 left')).toBeInTheDocument()
     expect(screen.getByText('E-book')).toBeInTheDocument()
     expect(screen.getByRole('img', { name: 'Cover of Clean Code' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Bookmark Clean Code' })).toBeInTheDocument()
   })
 
   it('marks out-of-stock books and hides the discount when there is none', () => {

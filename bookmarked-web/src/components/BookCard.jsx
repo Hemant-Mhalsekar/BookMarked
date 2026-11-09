@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { formatPrice } from '../utils/format'
 import BookCover from './BookCover'
+import BookmarkButton from './BookmarkButton'
 
 export function Stars({ rating = 0, count }) {
   const value = Number(rating) || 0
@@ -18,10 +19,14 @@ export default function BookCard({ book }) {
   const author = book.authors?.join(', ')
   const out = book.badges?.includes('OUT_OF_STOCK')
   return (
-    <Link
-      to={`/book/${book.slug}`}
-      className="group flex flex-col gap-3 rounded-xl border border-transparent p-2 transition hover:border-slate-200 hover:bg-white hover:shadow-sm"
-    >
+    <div className="group relative">
+      <div className="absolute right-4 top-4 z-10 transition sm:opacity-0 sm:group-focus-within:opacity-100 sm:group-hover:opacity-100">
+        <BookmarkButton bookId={book.id} title={book.title} />
+      </div>
+      <Link
+        to={`/book/${book.slug}`}
+        className="flex flex-col gap-3 rounded-xl border border-transparent p-2 transition hover:border-slate-200 hover:bg-white hover:shadow-sm"
+      >
       <div className={`relative ${out ? 'opacity-60' : ''}`}>
         <BookCover title={book.title} author={author} src={book.coverImageUrl} />
         {book.discountPercent > 0 && (
@@ -47,7 +52,8 @@ export default function BookCard({ book }) {
           {book.badges?.includes('EBOOK_AVAILABLE') && <Badge tone="brand">E-book</Badge>}
         </div>
       </div>
-    </Link>
+      </Link>
+    </div>
   )
 }
 

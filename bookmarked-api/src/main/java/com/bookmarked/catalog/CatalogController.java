@@ -3,6 +3,7 @@ package com.bookmarked.catalog;
 import com.bookmarked.catalog.dto.CatalogDtos.BookCard;
 import com.bookmarked.catalog.dto.CatalogDtos.BookDetail;
 import com.bookmarked.catalog.dto.CatalogDtos.CategoryNode;
+import com.bookmarked.catalog.dto.CatalogDtos.RelatedBooks;
 import com.bookmarked.common.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -51,6 +52,18 @@ public class CatalogController {
     @GetMapping("/books/suggest")
     public List<String> suggest(@RequestParam(required = false) String q) {
         return catalog.suggest(q);
+    }
+
+    @Operation(summary = "Cards for up to 24 book ids, in the given order (used for recently viewed)")
+    @GetMapping("/books/by-ids")
+    public List<BookCard> byIds(@RequestParam List<Long> ids) {
+        return catalog.byIds(ids);
+    }
+
+    @Operation(summary = "More by the same author and similar books")
+    @GetMapping("/books/{slug}/related")
+    public RelatedBooks related(@PathVariable String slug) {
+        return catalog.related(slug);
     }
 
     @Operation(summary = "One book with its formats, authors and categories")
