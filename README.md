@@ -340,15 +340,17 @@ and go straight to Render; they carry a Bearer token or a signed link, never the
 All services below have free tiers. Keep every secret in the providers' dashboards: none of them
 goes in the repo.
 
-1. **Database (Aiven for MySQL, free plan).** Create a MySQL service and copy its host, port, user
-   and password. The JDBC URL is
-   `jdbc:mysql://HOST:PORT/defaultdb?sslMode=REQUIRED&serverTimezone=UTC`. Flyway creates the
+1. **Database (Aiven for MySQL).** Use a MySQL service (the Developer plan, or an existing free one:
+   Aiven stopped creating free MySQL services in November 2026). In the service's *Databases* tab create
+   a database called `bookmarked`, and copy the host, port, user and password from *Overview*. The JDBC
+   URL is `jdbc:mysql://HOST:PORT/bookmarked?sslMode=REQUIRED&serverTimezone=UTC`. Flyway creates the
    tables on first start.
 2. **Files (Cloudflare R2).** Create a bucket (e.g. `bookmarked-files`, leave public access *off*),
    then *Manage R2 API tokens* → a token with *Object Read & Write* on that bucket. Note the access
    key, secret and the S3 endpoint `https://<account-id>.r2.cloudflarestorage.com`.
 3. **Email (Brevo).** Verify a sender address, then *SMTP & API* → create an SMTP key. The SMTP
-   login and key are `MAIL_USERNAME` / `MAIL_PASSWORD`.
+   login and key are `MAIL_USERNAME` / `MAIL_PASSWORD`. `render.yaml` uses port 2525 because
+   Render's free plan blocks the usual SMTP ports.
 4. **API (Render).** *New → Blueprint*, pick this repo; Render reads [`render.yaml`](render.yaml),
    generates `JWT_SECRET`, and asks for the values marked `sync: false`. Use the Vercel address from
    step 5 for `FRONTEND_URL` (you can fill it in after step 5 and redeploy). The `prod` profile
