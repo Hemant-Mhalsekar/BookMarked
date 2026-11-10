@@ -218,11 +218,13 @@ class PeopleAdminIntegrationTest {
                 .andReturn().getResponse().getContentAsString());
         assertThat(blocked.get("content").findValuesAsText("email")).contains(email);
         mvc.perform(bearer(admin, post("/api/admin/customers/" + id + "/unblock"))).andExpect(status().isOk());
-        assertThat(login(email, PASSWORD)).isNotBlank();
+        // blocking ended every session, so a fresh login is needed after unblocking
+        String fresh = login(email, PASSWORD);
+        assertThat(fresh).isNotBlank();
 
         // customers can't see any of this; staff ids aren't customers
-        mvc.perform(bearer(again, get("/api/admin/customers"))).andExpect(status().isForbidden());
-        mvc.perform(bearer(again, get("/api/admin/audit"))).andExpect(status().isForbidden());
+        mvc.perform(bearer(fresh, get("/api/admin/customers"))).andExpect(status().isForbidden());
+        mvc.perform(bearer(fresh, get("/api/admin/audit"))).andExpect(status().isForbidden());
         long adminId = jdbc.queryForObject("select id from users where email = 'admin@people.test'", Long.class);
         mvc.perform(bearer(admin, get("/api/admin/customers/" + adminId))).andExpect(status().isNotFound());
     }
