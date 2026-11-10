@@ -20,7 +20,7 @@ describe('reading progress', () => {
 
 describe('fileUrl', () => {
   it('maps API paths onto the API base', () => {
-    const base = import.meta.env.VITE_API_URL || '/api'
+    const base = import.meta.env.VITE_DIRECT_API_URL || import.meta.env.VITE_API_URL || '/api'
     expect(fileUrl('/api/files/abc.def')).toBe(`${base}/files/abc.def`)
     expect(fileUrl('https://cdn.example.com/x.pdf')).toBe('https://cdn.example.com/x.pdf')
   })

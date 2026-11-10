@@ -1,0 +1,78 @@
+# Render Blueprint for the BookMarked API (https://render.com/docs/blueprint-spec).
+# New > Blueprint > pick this repo. Values marked sync: false are asked for once in the dashboard;
+# never commit them. See README "Deploying" for where each value comes from.
+services:
+  - type: web
+    name: bookmarked-api
+    runtime: docker
+    plan: free
+    region: singapore
+    dockerfilePath: ./bookmarked-api/Dockerfile
+    dockerContext: ./bookmarked-api
+    buildFilter:
+      paths:
+        - bookmarked-api/**
+    healthCheckPath: /actuator/health
+    autoDeploy: true
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: JAVA_TOOL_OPTIONS
+        # the free plan has 512 MB: small thread stacks and the lean serial collector
+        value: "-XX:+UseSerialGC -Xss512k -XX:MaxMetaspaceSize=160m"
+      # Database (Aiven for MySQL): jdbc:mysql://HOST:PORT/defaultdb?sslMode=REQUIRED&serverTimezone=UTC
+      - key: DB_URL
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      # Security
+      - key: JWT_SECRET
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: FRONTEND_URL
+        sync: false            # e.g. https://bookmarked.vercel.app
+      # First Super Admin, created once on an empty database
+      - key: SUPER_ADMIN_EMAIL
+        sync: false
+      - key: SUPER_ADMIN_PASSWORD
+        sync: false
+      - key: SUPER_ADMIN_PHONE
+        sync: false
+      - key: SEED_DEMO_CATALOG
+        value: "true"
+      # Email (Brevo SMTP)
+      - key: MAIL_HOST
+        value: smtp-relay.brevo.com
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_SMTP_AUTH
+        value: "true"
+      - key: MAIL_STARTTLS
+        value: "true"
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM
+        sync: false            # e.g. BookMarked <you@yourdomain> (a sender verified in Brevo)
+      # Files (Cloudflare R2)
+      - key: STORAGE_TYPE
+        value: s3
+      - key: R2_ENDPOINT
+        sync: false            # https://<account-id>.r2.cloudflarestorage.com
+      - key: R2_BUCKET
+        sync: false
+      - key: R2_ACCESS_KEY
+        sync: false
+      - key: R2_SECRET_KEY
+        sync: false
+      # Razorpay (test mode keys are fine for a portfolio)
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+      - key: RAZORPAY_WEBHOOK_SECRET
+        sync: false
