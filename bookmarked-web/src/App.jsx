@@ -20,6 +20,11 @@ import AdminBooksPage from './features/admin/AdminBooksPage'
 import AdminCategoriesPage from './features/admin/AdminCategoriesPage'
 import AdminLayout from './features/admin/AdminLayout'
 import AdminReviewsPage from './features/admin/AdminReviewsPage'
+import AdminAuditPage from './features/admin/people/AdminAuditPage'
+import AdminCustomerPage from './features/admin/people/AdminCustomerPage'
+import AdminCustomersPage from './features/admin/people/AdminCustomersPage'
+import AdminStaffPage from './features/admin/people/AdminStaffPage'
+import AcceptInvitePage from './features/auth/AcceptInvitePage'
 import AdminOrderPage from './features/admin/orders/AdminOrderPage'
 import AdminOrdersPage from './features/admin/orders/AdminOrdersPage'
 import AdminRefundsPage from './features/admin/orders/AdminRefundsPage'
@@ -82,6 +87,7 @@ export default function App() {
           <Route path="signup" element={<SignupPage />} />
           <Route path="forgot-password" element={<ForgotPasswordPage />} />
           <Route path="reset-password" element={<ResetPasswordPage />} />
+          <Route path="accept-invite" element={<AcceptInvitePage />} />
         </Route>
 
         <Route element={<ProtectedRoute />}>
@@ -117,6 +123,16 @@ export default function App() {
             <Route element={<ProtectedRoute staffOnly permission="ORDER_READ" />}>
               <Route path="orders" element={<AdminOrdersPage />} />
               <Route path="orders/:orderNumber" element={<AdminOrderPage />} />
+            </Route>
+            <Route element={<ProtectedRoute staffOnly permission="STAFF_MANAGE" />}>
+              <Route path="staff" element={<AdminStaffPage />} />
+            </Route>
+            <Route element={<ProtectedRoute staffOnly permission="USER_MANAGE" />}>
+              <Route path="customers" element={<AdminCustomersPage />} />
+              <Route path="customers/:id" element={<AdminCustomerPage />} />
+            </Route>
+            <Route element={<ProtectedRoute staffOnly permission="AUDIT_VIEW" />}>
+              <Route path="audit" element={<AdminAuditPage />} />
             </Route>
             <Route element={<ProtectedRoute staffOnly permission="REVIEW_MODERATE" />}>
               <Route path="reviews" element={<AdminReviewsPage />} />

@@ -11,6 +11,9 @@ const SECTIONS = [
   { to: '/admin/reviews', label: 'Reviews', permission: 'REVIEW_MODERATE' },
   { to: '/admin/books', label: 'Books', permission: 'BOOK_READ' },
   { to: '/admin/categories', label: 'Categories', permission: 'BOOK_READ' },
+  { to: '/admin/customers', label: 'Customers', permission: 'USER_MANAGE' },
+  { to: '/admin/staff', label: 'Staff', permission: 'STAFF_MANAGE' },
+  { to: '/admin/audit', label: 'Audit log', permission: 'AUDIT_VIEW' },
 ]
 
 export default function AdminLayout() {

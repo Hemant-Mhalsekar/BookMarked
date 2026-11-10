@@ -47,6 +47,9 @@ export const authApi = api.injectEndpoints({
     resetPassword: build.mutation({
       query: (body) => ({ url: '/auth/reset-password', method: 'POST', body }),
     }),
+    acceptInvite: build.mutation({
+      query: (body) => ({ url: '/auth/accept-invite', method: 'POST', body }),
+    }),
   }),
 })
 
@@ -59,4 +62,5 @@ export const {
   useLogoutMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,
+  useAcceptInviteMutation,
 } = authApi

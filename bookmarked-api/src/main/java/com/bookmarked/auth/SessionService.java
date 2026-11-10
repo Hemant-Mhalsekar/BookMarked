@@ -33,9 +33,11 @@ public class SessionService {
     private final Clock clock;
     private final Duration refreshTtl;
     private final Duration reuseGrace;
+    private final com.bookmarked.auth.security.SessionGuard sessionGuard;
 
     public SessionService(RefreshTokenRepository refreshTokens, JwtService jwtService, Clock clock,
-                          AppProperties props) {
+                          AppProperties props, com.bookmarked.auth.security.SessionGuard sessionGuard) {
+        this.sessionGuard = sessionGuard;
         this.refreshTokens = refreshTokens;
         this.jwtService = jwtService;
         this.clock = clock;
@@ -112,7 +114,10 @@ public class SessionService {
             return;
         }
         refreshTokens.findByTokenHash(Tokens.sha256(rawToken))
-                .ifPresent(t -> t.revoke(RefreshToken.REASON_LOGOUT, clock.instant()));
+                .ifPresent(t -> {
+                    t.revoke(RefreshToken.REASON_LOGOUT, clock.instant());
+                    sessionGuard.forgetAll();
+                });
     }
 
     private IssuedSession issue(User user, RefreshToken session, String raw) {

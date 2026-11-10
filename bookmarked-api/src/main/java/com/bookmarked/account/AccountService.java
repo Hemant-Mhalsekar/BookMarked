@@ -34,10 +34,12 @@ public class AccountService {
     private final PasswordEncoder passwordEncoder;
     private final MailService mail;
     private final Clock clock;
+    private final com.bookmarked.auth.security.SessionGuard sessionGuard;
 
     public AccountService(UserRepository users, RefreshTokenRepository refreshTokens,
                           LoginHistoryRepository loginHistory, PasswordEncoder passwordEncoder,
-                          MailService mail, Clock clock) {
+                          MailService mail, Clock clock, com.bookmarked.auth.security.SessionGuard sessionGuard) {
+        this.sessionGuard = sessionGuard;
         this.users = users;
         this.refreshTokens = refreshTokens;
         this.loginHistory = loginHistory;
@@ -69,6 +71,7 @@ public class AccountService {
         } else {
             refreshTokens.revokeAllForUser(user.getId(), RefreshToken.REASON_PASSWORD_CHANGED, now);
         }
+        sessionGuard.forgetAll();
         mail.sendPasswordChanged(new MailService.Recipient(user.getEmail(), user.getFullName()));
     }
 
@@ -88,12 +91,14 @@ public class AccountService {
                 // 404 rather than 403 so ids of other users' sessions reveal nothing
                 .orElseThrow(() -> ApiException.notFound("SESSION_NOT_FOUND", "Session not found."));
         token.revoke(RefreshToken.REASON_REVOKED_BY_USER, clock.instant());
+        sessionGuard.forgetAll();
     }
 
     /** "Log out all other devices". Returns how many sessions were ended. */
     @Transactional
     public int revokeOtherSessions(AuthUser caller) {
         Instant now = clock.instant();
+        sessionGuard.forgetAll();
         if (caller.sessionId() == null) {
             return refreshTokens.revokeAllForUser(caller.id(), RefreshToken.REASON_REVOKED_BY_USER, now);
         }
