@@ -35,10 +35,15 @@ public class AccountController {
     private final RateLimitService rateLimit;
 
     private final AccountOverviewService overview;
+    private final AccountLifecycleService lifecycle;
+    private final com.bookmarked.auth.RefreshCookies cookies;
 
     public AccountController(AccountService accountService, RateLimitService rateLimit,
-                             AccountOverviewService overview) {
+                             AccountOverviewService overview, AccountLifecycleService lifecycle,
+                             com.bookmarked.auth.RefreshCookies cookies) {
         this.overview = overview;
+        this.lifecycle = lifecycle;
+        this.cookies = cookies;
         this.accountService = accountService;
         this.rateLimit = rateLimit;
     }
@@ -63,6 +68,38 @@ public class AccountController {
                                @Valid @RequestBody AccountDtos.PhoneRequest req) {
         rateLimit.check(Rule.PROFILE_CHANGE, "user:" + caller.id());
         return accountService.changePhone(caller, req.phone(), req.password());
+    }
+
+    @Operation(summary = "Ask to change my email (needs my password); the new address gets a confirmation link")
+    @PostMapping("/email-change")
+    public AccountLifecycleService.PendingEmail requestEmailChange(@AuthenticationPrincipal AuthUser caller,
+                                                                   @Valid @RequestBody AccountDtos.EmailChangeRequest req) {
+        rateLimit.check(Rule.EMAIL_ACTION, "user:" + caller.id());
+        return lifecycle.requestEmailChange(caller, req.newEmail(), req.password());
+    }
+
+    @Operation(summary = "The email change waiting for confirmation (204 if none)")
+    @GetMapping("/email-change")
+    public ResponseEntity<AccountLifecycleService.PendingEmail> pendingEmail(@AuthenticationPrincipal AuthUser caller) {
+        AccountLifecycleService.PendingEmail pending = lifecycle.pendingEmail(caller);
+        return pending == null ? ResponseEntity.noContent().build() : ResponseEntity.ok(pending);
+    }
+
+    @Operation(summary = "Cancel a pending email change")
+    @DeleteMapping("/email-change")
+    public ResponseEntity<Void> cancelEmailChange(@AuthenticationPrincipal AuthUser caller) {
+        lifecycle.cancelEmailChange(caller);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Delete my account (password + typing DELETE); signs out everywhere")
+    @PostMapping("/delete")
+    public ResponseEntity<MessageResponse> deleteAccount(@AuthenticationPrincipal AuthUser caller,
+                                                         @Valid @RequestBody AccountDtos.DeleteAccountRequest req) {
+        rateLimit.check(Rule.PASSWORD_CHANGE, "user:" + caller.id());
+        lifecycle.deleteAccount(caller, req.password(), req.confirmation());
+        return ResponseEntity.ok().header(org.springframework.http.HttpHeaders.SET_COOKIE, cookies.clear())
+                .body(new MessageResponse("Your account has been deleted."));
     }
 
     @Operation(summary = "Current user's profile, role and permissions")

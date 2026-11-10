@@ -25,6 +25,9 @@ import AdminCustomerPage from './features/admin/people/AdminCustomerPage'
 import AdminCustomersPage from './features/admin/people/AdminCustomersPage'
 import AdminStaffPage from './features/admin/people/AdminStaffPage'
 import AcceptInvitePage from './features/auth/AcceptInvitePage'
+import ConfirmEmailChangePage from './features/auth/ConfirmEmailChangePage'
+import GoodbyePage from './features/account/GoodbyePage'
+import AdminInventoryPage from './features/admin/inventory/AdminInventoryPage'
 import AdminOrderPage from './features/admin/orders/AdminOrderPage'
 import AdminOrdersPage from './features/admin/orders/AdminOrdersPage'
 import AdminRefundsPage from './features/admin/orders/AdminRefundsPage'
@@ -81,6 +84,8 @@ export default function App() {
         <Route path="stack" element={<StackPage />} />
         <Route path="read-sample/:variantId" element={<Suspense fallback={<FullPageSpinner />}><SampleReaderPage /></Suspense>} />
         <Route path="verify-email" element={<VerifyEmailPage />} />
+        <Route path="confirm-email-change" element={<ConfirmEmailChangePage />} />
+        <Route path="goodbye" element={<GoodbyePage />} />
 
         <Route element={<GuestOnlyRoute />}>
           <Route path="login" element={<LoginPage />} />
@@ -119,6 +124,7 @@ export default function App() {
             <Route element={<ProtectedRoute staffOnly permission="BOOK_READ" />}>
               <Route path="books" element={<AdminBooksPage />} />
               <Route path="categories" element={<AdminCategoriesPage />} />
+              <Route path="inventory" element={<AdminInventoryPage />} />
             </Route>
             <Route element={<ProtectedRoute staffOnly permission="ORDER_READ" />}>
               <Route path="orders" element={<AdminOrdersPage />} />

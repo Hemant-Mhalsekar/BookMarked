@@ -43,9 +43,11 @@ public class AuthController {
     private final SessionService sessionService;
     private final RefreshCookies cookies;
     private final RateLimitService rateLimit;
+    private final com.bookmarked.account.AccountLifecycleService lifecycle;
 
     public AuthController(AuthService authService, SessionService sessionService, RefreshCookies cookies,
-                          RateLimitService rateLimit) {
+                          RateLimitService rateLimit, com.bookmarked.account.AccountLifecycleService lifecycle) {
+        this.lifecycle = lifecycle;
         this.authService = authService;
         this.sessionService = sessionService;
         this.cookies = cookies;
@@ -121,6 +123,13 @@ public class AuthController {
     public MessageResponse resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
         authService.resetPassword(req.token(), req.newPassword());
         return new MessageResponse("Password updated. Please log in with your new password.");
+    }
+
+    @Operation(summary = "Confirm a new email address from the link sent to it; signs out everywhere")
+    @PostMapping("/confirm-email-change")
+    public MessageResponse confirmEmailChange(@Valid @RequestBody TokenRequest req) {
+        lifecycle.confirmEmailChange(req.token());
+        return new MessageResponse("Your email has been changed. Log in with your new address.");
     }
 
     @Operation(summary = "New staff: set your password from the invite email")

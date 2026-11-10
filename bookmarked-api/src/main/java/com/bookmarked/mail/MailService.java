@@ -82,6 +82,26 @@ public class MailService {
     }
 
     @Async
+    /** Sent to the NEW address: proves the person owns it. */
+    public void sendEmailChangeConfirm(Recipient to, String rawToken, long hours) {
+        String link = props.frontendUrl() + "/confirm-email-change?token=" + encode(rawToken);
+        send(to, "Confirm your new BookMarked email", "email/email-change-confirm",
+                Map.of("name", to.name(), "link", link, "hours", hours));
+    }
+
+    /** Sent to the OLD address when a change is requested ({@code done=false}) and when it happens. */
+    public void sendEmailChangeAlert(Recipient to, String maskedNewEmail, boolean done) {
+        send(to, done ? "Your BookMarked email was changed" : "Someone asked to change your BookMarked email",
+                "email/email-change-alert",
+                Map.of("name", to.name(), "newEmail", maskedNewEmail, "done", done, "when", WHEN.format(Instant.now()),
+                        "resetLink", props.frontendUrl() + "/forgot-password"));
+    }
+
+    public void sendAccountDeleted(Recipient to) {
+        send(to, "Your BookMarked account was deleted", "email/account-deleted",
+                Map.of("name", to.name(), "when", WHEN.format(Instant.now())));
+    }
+
     public void sendStaffInvite(Recipient to, String rawToken, String roleLabel, long hours) {
         String link = props.frontendUrl() + "/accept-invite?token=" + encode(rawToken);
         send(to, "You're invited to the BookMarked team", "email/staff-invite",

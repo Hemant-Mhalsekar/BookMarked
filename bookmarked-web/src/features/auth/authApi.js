@@ -47,6 +47,19 @@ export const authApi = api.injectEndpoints({
     resetPassword: build.mutation({
       query: (body) => ({ url: '/auth/reset-password', method: 'POST', body }),
     }),
+    confirmEmailChange: build.mutation({
+      query: (token) => ({ url: '/auth/confirm-email-change', method: 'POST', body: { token } }),
+      async onQueryStarted(_arg, { dispatch, queryFulfilled }) {
+        try {
+          await queryFulfilled
+          // the server ended every session; drop this one too
+          dispatch(sessionEnded())
+          dispatch(api.util.resetApiState())
+        } catch {
+          // the page shows the error
+        }
+      },
+    }),
     acceptInvite: build.mutation({
       query: (body) => ({ url: '/auth/accept-invite', method: 'POST', body }),
     }),
@@ -63,4 +76,5 @@ export const {
   useForgotPasswordMutation,
   useResetPasswordMutation,
   useAcceptInviteMutation,
+  useConfirmEmailChangeMutation,
 } = authApi

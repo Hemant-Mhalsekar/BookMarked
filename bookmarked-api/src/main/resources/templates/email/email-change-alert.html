@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body th:replace="~{email/layout :: page(~{::section})}">
+<section>
+    <p>Hi <span th:text="${name}">there</span>,</p>
+    <p th:if="${done}">The email on your BookMarked account was changed to
+        <strong th:text="${newEmail}">n***@example.com</strong> on <span th:text="${when}">today</span>.
+        You have been signed out everywhere and this address will no longer receive account emails.</p>
+    <p th:unless="${done}">Someone asked to change the email on your BookMarked account to
+        <strong th:text="${newEmail}">n***@example.com</strong> on <span th:text="${when}">today</span>.
+        Nothing changes until the new address is confirmed.</p>
+    <p>If this wasn't you, <a th:href="${resetLink}">reset your password now</a> and contact us.</p>
+</section>
+</body>
+</html>

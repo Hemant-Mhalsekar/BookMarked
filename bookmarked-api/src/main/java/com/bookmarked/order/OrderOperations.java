@@ -104,7 +104,7 @@ public class OrderOperations {
             notifications.notifyStaff("INVENTORY_UPDATE", Type.LOW_STOCK,
                     left == 0 ? "Sold out: " + label : "Low stock: " + label,
                     left == 0 ? label + " is out of stock." : "Only " + left + " left of " + label + ".",
-                    "/admin/books/" + item.getVariant().getBook().getId() + "/edit");
+                    "/admin/inventory?filter=LOW");
         }
     }
 
