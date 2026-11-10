@@ -20,7 +20,7 @@ services:
       - key: JAVA_TOOL_OPTIONS
         # the free plan has 512 MB: small thread stacks and the lean serial collector
         value: "-XX:+UseSerialGC -Xss512k -XX:MaxMetaspaceSize=160m"
-      # Database (Aiven for MySQL): jdbc:mysql://HOST:PORT/defaultdb?sslMode=REQUIRED&serverTimezone=UTC
+      # Database (Aiven for MySQL): jdbc:mysql://HOST:PORT/bookmarked?sslMode=REQUIRED&serverTimezone=UTC
       - key: DB_URL
         sync: false
       - key: DB_USERNAME
@@ -46,8 +46,9 @@ services:
       # Email (Brevo SMTP)
       - key: MAIL_HOST
         value: smtp-relay.brevo.com
+      # Render's free plan blocks outbound 25/465/587; Brevo also listens on 2525 (STARTTLS)
       - key: MAIL_PORT
-        value: "587"
+        value: "2525"
       - key: MAIL_SMTP_AUTH
         value: "true"
       - key: MAIL_STARTTLS
