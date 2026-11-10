@@ -123,6 +123,13 @@ public class AuthController {
         return new MessageResponse("Password updated. Please log in with your new password.");
     }
 
+    @Operation(summary = "New staff: set your password from the invite email")
+    @PostMapping("/accept-invite")
+    public MessageResponse acceptInvite(@Valid @RequestBody ResetPasswordRequest req) {
+        authService.acceptInvite(req.token(), req.newPassword());
+        return new MessageResponse("Your staff account is ready. Log in with your email and new password.");
+    }
+
     private ResponseEntity<AuthResponse> withCookie(SessionService.IssuedSession session) {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookies.issue(session.rawRefreshToken()))

@@ -26,9 +26,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     public static final String AUTH_ERROR_ATTRIBUTE = "bookmarked.authError";
 
     private final JwtService jwtService;
+    private final SessionGuard sessionGuard;
 
-    public JwtAuthenticationFilter(JwtService jwtService) {
+    public JwtAuthenticationFilter(JwtService jwtService, SessionGuard sessionGuard) {
         this.jwtService = jwtService;
+        this.sessionGuard = sessionGuard;
     }
 
     @Override
@@ -39,8 +41,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             String token = header.substring(7).trim();
             try {
                 AuthUser user = jwtService.parse(token);
-                var auth = new UsernamePasswordAuthenticationToken(user, null, user.authorities());
-                SecurityContextHolder.getContext().setAuthentication(auth);
+                if (sessionGuard.allows(user)) {
+                    var auth = new UsernamePasswordAuthenticationToken(user, null, user.authorities());
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                } else {
+                    // logged out, signed out by staff, or the account was blocked
+                    request.setAttribute(AUTH_ERROR_ATTRIBUTE, "SESSION_REVOKED");
+                }
             } catch (ExpiredJwtException e) {
                 request.setAttribute(AUTH_ERROR_ATTRIBUTE, "TOKEN_EXPIRED");
             } catch (JwtException | IllegalArgumentException e) {

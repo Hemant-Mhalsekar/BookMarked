@@ -81,6 +81,13 @@ public class MailService {
                         "resetLink", props.frontendUrl() + "/forgot-password"));
     }
 
+    @Async
+    public void sendStaffInvite(Recipient to, String rawToken, String roleLabel, long hours) {
+        String link = props.frontendUrl() + "/accept-invite?token=" + encode(rawToken);
+        send(to, "You're invited to the BookMarked team", "email/staff-invite",
+                Map.of("name", to.name(), "link", link, "role", roleLabel, "hours", hours));
+    }
+
     /** One line of the order email, e.g. ("Clean Code", "Paperback × 2", "₹1,398"). */
     public record OrderLine(String title, String detail, String amount) {
     }

@@ -286,6 +286,22 @@ Bookmarks, Addresses, My reviews, Notifications and Security. The overview comes
 have a return ready for pickup, books waiting for a review). Profile: change your name, or your mobile number with
 your password (it must not belong to another account).
 
+## What Step 7 includes (part 2): staff, customers and the audit log
+
+- **Staff accounts** (`/admin/staff`, Super Admin): add a person with a role and they get an
+  email to set their own password (`/accept-invite`, link valid 48 hours). Nobody else ever knows it.
+  Change role, block/unblock, sign out everywhere, resend the invite.
+- **Guard rails**: you can't change, block or sign out yourself, and the last active Super Admin
+  can't be demoted or blocked, so the store can't be locked out.
+- **Immediate revocation**: role changes, blocks and "sign out everywhere" take effect on the next
+  request, not when the 15-minute access token expires. A small cached session check (20 s, cleared
+  on every revocation) rejects tokens whose session was ended (`401 SESSION_REVOKED`).
+- **Customers** (`/admin/customers`): search by name, email or phone; filter active/blocked/deleted;
+  a profile with orders, spend (net of refunds), returns, reviews, e-books, active sessions and recent sign-ins.
+- **Audit log** (`/admin/audit`): every non-GET admin request is recorded automatically (who, what,
+  where from, result), including refused attempts. Staff and customer actions record before/after values.
+  Entries are append-only and survive a failed request (separate transaction).
+
 ## Configuration
 
 All settings come from environment variables; see [`.env.example`](.env.example).

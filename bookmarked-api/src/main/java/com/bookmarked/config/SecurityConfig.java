@@ -40,7 +40,8 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtService jwtService,
-                                                   RestAuthHandlers handlers) throws Exception {
+                                                   RestAuthHandlers handlers,
+                                                   com.bookmarked.auth.security.SessionGuard sessionGuard) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
@@ -61,7 +62,7 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/admin/**").hasAuthority(AuthUser.STAFF_AUTHORITY)
                         .anyRequest().authenticated())
-                .addFilterBefore(new JwtAuthenticationFilter(jwtService), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(new JwtAuthenticationFilter(jwtService, sessionGuard), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

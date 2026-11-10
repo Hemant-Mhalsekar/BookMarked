@@ -252,6 +252,26 @@ public class AuthService {
         mail.sendPasswordChanged(recipient(user));
     }
 
+    /** A new staff member sets their first password from the invite email. */
+    @Transactional
+    public void acceptInvite(String rawToken, String newPassword) {
+        Instant now = clock.instant();
+        VerificationToken token = verificationTokens
+                .findByTokenHashAndType(Tokens.sha256(rawToken), TokenType.STAFF_INVITE)
+                .filter(t -> t.isUsable(now))
+                .orElseThrow(() -> ApiException.badRequest("TOKEN_INVALID",
+                        "This invite link is invalid or has expired. Ask an admin to send a new one."));
+        User user = token.getUser();
+        if (user.isDeleted() || !user.isEnabled()) {
+            throw ApiException.badRequest("TOKEN_INVALID", "This invite is no longer valid.");
+        }
+        token.markUsed(now);
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        user.setEmailVerified(true);
+        user.setFailedLoginAttempts(0);
+        user.setLockedUntil(null);
+    }
+
     // ------------------------------------------------------------------
 
     static String normalizeEmail(String email) {
