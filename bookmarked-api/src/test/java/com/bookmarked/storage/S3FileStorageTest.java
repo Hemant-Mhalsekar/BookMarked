@@ -4,9 +4,11 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.testcontainers.containers.MinIOContainer;
+import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 import software.amazon.awssdk.services.s3.S3Client;
 
 import java.io.IOException;
@@ -16,12 +18,14 @@ import java.nio.file.Path;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** The R2 storage against MinIO, which speaks the same S3 API. */
+/** The R2 storage against Adobe S3Mock, an open-source server that speaks the same S3 API. */
 @Testcontainers
 class S3FileStorageTest {
 
     @Container
-    static MinIOContainer minio = new MinIOContainer("minio/minio:RELEASE.2023-09-04T19-57-37Z");
+    static GenericContainer<?> s3mock = new GenericContainer<>(DockerImageName.parse("adobe/s3mock:3.12.0"))
+            .withExposedPorts(9090)
+            .waitingFor(Wait.forListeningPort());
 
     static S3Client client;
     static S3FileStorage storage;
@@ -31,8 +35,9 @@ class S3FileStorageTest {
 
     @BeforeAll
     static void setUp() {
-        client = S3FileStorage.client(new StorageProperties.S3(minio.getS3URL(), "auto", "bookmarked-test",
-                minio.getUserName(), minio.getPassword()));
+        String endpoint = "http://" + s3mock.getHost() + ":" + s3mock.getMappedPort(9090);
+        client = S3FileStorage.client(new StorageProperties.S3(endpoint, "auto", "bookmarked-test",
+                "test-access-key", "test-secret-key"));
         client.createBucket(b -> b.bucket("bookmarked-test"));
         storage = new S3FileStorage(client, "bookmarked-test");
     }
