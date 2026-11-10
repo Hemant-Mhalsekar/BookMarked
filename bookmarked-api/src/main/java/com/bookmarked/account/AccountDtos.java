@@ -21,6 +21,17 @@ public final class AccountDtos {
                     message = "Name must be 2-60 letters") String fullName) {
     }
 
+    public record EmailChangeRequest(
+            @jakarta.validation.constraints.NotBlank @jakarta.validation.constraints.Email
+            @jakarta.validation.constraints.Size(max = 254) String newEmail,
+            @jakarta.validation.constraints.NotBlank(message = "Enter your password") String password) {
+    }
+
+    public record DeleteAccountRequest(
+            @jakarta.validation.constraints.NotBlank(message = "Enter your password") String password,
+            @jakarta.validation.constraints.NotBlank(message = "Type DELETE to confirm") String confirmation) {
+    }
+
     public record PhoneRequest(
             @jakarta.validation.constraints.NotBlank
             @jakarta.validation.constraints.Pattern(regexp = com.bookmarked.auth.dto.AuthDtos.PHONE_REGEX,

@@ -28,6 +28,8 @@ public class RefreshToken {
     public static final String REASON_PASSWORD_CHANGED = "PASSWORD_CHANGED";
     public static final String REASON_REUSE_DETECTED = "REUSE_DETECTED";
     public static final String REASON_ADMIN = "ADMIN";
+    public static final String REASON_EMAIL_CHANGED = "EMAIL_CHANGED";
+    public static final String REASON_ACCOUNT_DELETED = "ACCOUNT_DELETED";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,5 +1,11 @@
 import { api } from '../../app/api'
-import { userUpdated } from '../auth/authSlice'
+import { sessionEnded, userUpdated } from '../auth/authSlice'
+
+/** Forget the session in this tab after the server has ended it. */
+export const endLocalSession = () => (dispatch) => {
+  dispatch(sessionEnded())
+  dispatch(api.util.resetApiState())
+}
 
 export const accountApi = api.injectEndpoints({
   endpoints: (build) => ({
@@ -60,6 +66,23 @@ export const accountApi = api.injectEndpoints({
         }
       },
     }),
+    pendingEmail: build.query({
+      // 204 when nothing is waiting
+      query: () => ({ url: '/account/email-change', responseHandler: (r) => (r.status === 204 ? null : r.json()) }),
+      providesTags: ['PendingEmail'],
+    }),
+    requestEmailChange: build.mutation({
+      query: (body) => ({ url: '/account/email-change', method: 'POST', body }),
+      invalidatesTags: ['PendingEmail'],
+    }),
+    cancelEmailChange: build.mutation({
+      query: () => ({ url: '/account/email-change', method: 'DELETE' }),
+      invalidatesTags: ['PendingEmail'],
+    }),
+    // the page leaves the protected area first, then ends the local session (endLocalSession)
+    deleteAccount: build.mutation({
+      query: (body) => ({ url: '/account/delete', method: 'POST', body }),
+    }),
     loginHistory: build.query({
       query: () => '/account/login-history',
       providesTags: ['LoginHistory'],
@@ -77,4 +100,8 @@ export const {
   useOverviewQuery,
   useUpdateNameMutation,
   useChangePhoneMutation,
+  usePendingEmailQuery,
+  useRequestEmailChangeMutation,
+  useCancelEmailChangeMutation,
+  useDeleteAccountMutation,
 } = accountApi

@@ -302,6 +302,20 @@ your password (it must not belong to another account).
   where from, result), including refused attempts. Staff and customer actions record before/after values.
   Entries are append-only and survive a failed request (separate transaction).
 
+## What Step 7 includes (part 3): inventory and account lifecycle
+
+- **Inventory** (`/admin/inventory`): every printed edition with stock, copies held by orders
+  awaiting payment, and sales in the last 30 days; low-stock and sold-out filters with counts.
+  Restock or correct a count (corrections need a reason). One atomic, row-locked update that can't
+  go below zero, an inventory ledger entry, and an audit entry with before/after stock.
+  Low-stock alerts now link here.
+- **Change email**: needs the password; the new address must click a 24-hour link, and the old
+  address is told when the change is requested and when it happens. Afterwards every session ends.
+- **Delete account**: password plus typing DELETE, refused while an order, return or refund is in
+  progress. The account is anonymised ("Former customer", unusable email and phone, random password,
+  blocked); addresses, Your Stack, Bookmarks, recently viewed, reading progress and notifications are
+  deleted; orders and invoices are kept for tax records. The old email and phone can sign up again.
+
 ## Configuration
 
 All settings come from environment variables; see [`.env.example`](.env.example).

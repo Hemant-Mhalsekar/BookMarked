@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body th:replace="~{email/layout :: page(~{::section})}">
+<section>
+    <p>Hi <span th:text="${name}">there</span>,</p>
+    <p>You asked to use this address for your BookMarked account. Confirm it to finish the change:</p>
+    <p style="margin:28px 0;">
+        <a th:href="${link}"
+           style="background:#1e3a8a;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;font-weight:bold;">
+            Confirm new email
+        </a>
+    </p>
+    <p>The link works for <span th:text="${hours}">24</span> hours. After the change you'll be signed out
+        everywhere, and you'll log in with this address from then on.</p>
+    <p>If you didn't ask for this, ignore this email and nothing will change.</p>
+</section>
+</body>
+</html>

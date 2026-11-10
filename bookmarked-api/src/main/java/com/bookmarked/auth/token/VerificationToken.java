@@ -60,6 +60,12 @@ public class VerificationToken {
         this.expiresAt = expiresAt;
     }
 
+    /** An EMAIL_CHANGE token, carrying the address it will switch to. */
+    public VerificationToken(User user, String tokenHash, Instant expiresAt, String newEmail) {
+        this(user, tokenHash, TokenType.EMAIL_CHANGE, expiresAt);
+        this.newEmail = newEmail;
+    }
+
     @PrePersist
     void onCreate() {
         createdAt = Instant.now();
