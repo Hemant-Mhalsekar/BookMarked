@@ -40,7 +40,8 @@ export const libraryApi = api.injectEndpoints({
       query: ({ variantId, file, sample = false }) => {
         const body = new FormData()
         body.append('file', file)
-        return { url: `/admin/variants/${variantId}/ebook${sample ? '/sample' : ''}`, method: 'PUT', body }
+        // large uploads skip the frontend host's proxy when a direct API address is configured
+        return { url: directUrl(`/admin/variants/${variantId}/ebook${sample ? '/sample' : ''}`), method: 'PUT', body }
       },
       invalidatesTags: (_r, _e, { variantId }) => [{ type: 'EbookFile', id: variantId }, 'Book'],
     }),
@@ -59,13 +60,25 @@ export const {
 } = libraryApi
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
+/**
+ * In production the site proxies /api through its host (so the login cookie stays
+ * first-party), but PDFs are big: uploads and file streams go straight to the API
+ * when VITE_DIRECT_API_URL is set. Those requests carry a Bearer token or a signed
+ * link, never the cookie, so going cross-origin is safe.
+ */
+const FILES_BASE = import.meta.env.VITE_DIRECT_API_URL || API_BASE
+
+/** An absolute URL on the direct API, or the path unchanged (relative to the normal API base). */
+export function directUrl(path) {
+  return import.meta.env.VITE_DIRECT_API_URL ? `${FILES_BASE}${path}` : path
+}
 
 /** "/api/files/abc" → the URL the browser should fetch (the API may live on another origin). */
 export function fileUrl(path) {
-  return path.startsWith('/api/') ? `${API_BASE}${path.slice(4)}` : path
+  return path.startsWith('/api/') ? `${FILES_BASE}${path.slice(4)}` : path
 }
 
-export const sampleUrl = (variantId) => `${API_BASE}/books/variants/${variantId}/sample`
+export const sampleUrl = (variantId) => `${FILES_BASE}/books/variants/${variantId}/sample`
 
 /** "Page 45 of 320 · 14%", or null before the first read. */
 export function progressText(lastPage, totalPages) {

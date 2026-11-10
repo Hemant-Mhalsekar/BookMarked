@@ -41,6 +41,8 @@ bookmarked/
 │  └─ src/main/resources/db/migration/   Flyway SQL (full schema in V1)
 ├─ bookmarked-web/        React app
 │  └─ src/{app,features,components,pages,utils}
+│  └─ vercel.json          Vercel: /api rewrite to Render, SPA fallback, security headers
+├─ render.yaml            Render Blueprint for the API
 ├─ docker-compose.yml
 └─ .github/workflows/ci.yml
 ```
@@ -322,6 +324,44 @@ All settings come from environment variables; see [`.env.example`](.env.example)
 Business rules (delivery fee, reservation time, return window…) live in
 `bookmarked-api/src/main/resources/application.yml` under `app.business`.
 
-**Production notes:** serve the frontend and API on the same site (e.g. `bookmarked.in` and `api.bookmarked.in`) so the
-refresh cookie is first-party, set `COOKIE_SECURE=true`, a strong `JWT_SECRET`, and run behind a proxy that sets
-`X-Forwarded-For` (the API trusts forwarded headers for client IPs).
+## Deploying (Render + Vercel + Aiven + Cloudflare R2)
+
+```
+browser ──► Vercel (React build)  ── /api/* rewrite ──►  Render (Spring Boot, Docker)  ──► Aiven MySQL
+   │                                                          │
+   └─── e-book uploads and PDF streams, direct ──────────────►├──► Cloudflare R2 (private bucket)
+                                                              └──► Brevo SMTP, Razorpay
+```
+
+The site calls the API through a Vercel rewrite, so the refresh cookie stays first-party
+(`SameSite=Strict`, no third-party cookies needed). Large PDF uploads and downloads skip the proxy
+and go straight to Render; they carry a Bearer token or a signed link, never the cookie.
+
+All services below have free tiers. Keep every secret in the providers' dashboards: none of them
+goes in the repo.
+
+1. **Database (Aiven for MySQL, free plan).** Create a MySQL service and copy its host, port, user
+   and password. The JDBC URL is
+   `jdbc:mysql://HOST:PORT/defaultdb?sslMode=REQUIRED&serverTimezone=UTC`. Flyway creates the
+   tables on first start.
+2. **Files (Cloudflare R2).** Create a bucket (e.g. `bookmarked-files`, leave public access *off*),
+   then *Manage R2 API tokens* → a token with *Object Read & Write* on that bucket. Note the access
+   key, secret and the S3 endpoint `https://<account-id>.r2.cloudflarestorage.com`.
+3. **Email (Brevo).** Verify a sender address, then *SMTP & API* → create an SMTP key. The SMTP
+   login and key are `MAIL_USERNAME` / `MAIL_PASSWORD`.
+4. **API (Render).** *New → Blueprint*, pick this repo; Render reads [`render.yaml`](render.yaml),
+   generates `JWT_SECRET`, and asks for the values marked `sync: false`. Use the Vercel address from
+   step 5 for `FRONTEND_URL` (you can fill it in after step 5 and redeploy). The `prod` profile
+   refuses to start with a development JWT secret, insecure cookies or a non-HTTPS frontend.
+   The free plan sleeps after 15 idle minutes, so the first request after a pause takes ~a minute.
+5. **Web (Vercel).** *Add New → Project*, pick this repo, set *Root Directory* to `bookmarked-web`.
+   Add the environment variable `VITE_DIRECT_API_URL=https://<your-render-service>.onrender.com/api`.
+   If your Render service isn't called `bookmarked-api`, change the rewrite destination in
+   [`bookmarked-web/vercel.json`](bookmarked-web/vercel.json) to match.
+6. **Razorpay (test mode).** *Webhooks* → add `https://<your-render-service>.onrender.com/api/webhooks/razorpay`
+   with the events `payment.captured`, `order.paid`, `payment.failed` and `refund.processed`, and a secret
+   that you also put in `RAZORPAY_WEBHOOK_SECRET`.
+7. Open the site, log in with `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD`, and change that password
+   from *Account → Security*.
+
+Local development is unchanged: `STORAGE_TYPE=local` keeps files in a folder and Mailpit catches email.

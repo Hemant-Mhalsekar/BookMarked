@@ -102,8 +102,16 @@ app:
     # Inserts ~16 sample books on an empty database (enabled in the dev profile)
     demo-catalog: ${SEED_DEMO_CATALOG:false}
   storage:
-    # Private folder for e-book PDFs (never served directly). Moves to an R2/S3 bucket at deployment.
+    # local = a private folder (dev, docker-compose); s3 = an S3-compatible bucket (Cloudflare R2 in production)
+    type: ${STORAGE_TYPE:local}
+    # Private folder for e-book PDFs (never served directly)
     local-dir: ${STORAGE_DIR:./data/files}
+    s3:
+      endpoint: ${R2_ENDPOINT:}          # https://<account-id>.r2.cloudflarestorage.com
+      region: ${R2_REGION:auto}
+      bucket: ${R2_BUCKET:}
+      access-key: ${R2_ACCESS_KEY:}
+      secret-key: ${R2_SECRET_KEY:}
     # How long a read or download link stays valid
     link-ttl: PT5M
   razorpay:
@@ -141,6 +149,18 @@ spring:
   config:
     activate:
       on-profile: prod
+  datasource:
+    hikari:
+      # free-tier MySQL plans allow few connections
+      maximum-pool-size: ${DB_POOL_SIZE:5}
+management:
+  health:
+    # an SMTP hiccup must not mark the API unhealthy (the host would restart it)
+    mail:
+      enabled: false
+app:
+  storage:
+    type: ${STORAGE_TYPE:s3}
 springdoc:
   swagger-ui:
     enabled: ${SWAGGER_ENABLED:true}
